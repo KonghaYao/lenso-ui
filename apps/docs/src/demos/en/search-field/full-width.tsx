@@ -1,0 +1,18 @@
+"use client";
+import { Label, SearchField } from "@lenso/ui";
+import * as stylex from "@stylexjs/stylex";
+const styles = stylex.create({ root: { width: 400 } });
+export function FullWidth() {
+  return (
+    <div {...stylex.props(styles.root)}>
+      <SearchField fullWidth name="search">
+        <Label>Search</Label>
+        <SearchField.Group>
+          <SearchField.SearchIcon />
+          <SearchField.Input placeholder="Search..." />
+          <SearchField.ClearButton />
+        </SearchField.Group>
+      </SearchField>
+    </div>
+  );
+}

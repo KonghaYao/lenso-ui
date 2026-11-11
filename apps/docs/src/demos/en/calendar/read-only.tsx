@@ -1,0 +1,17 @@
+"use client";
+// Copyright NextUI Inc. Apache-2.0. Modified for StyleX.
+import { Calendar } from "@lenso/ui";
+import { getLocalTimeZone, today } from "@internationalized/date";
+import * as stylex from "@stylexjs/stylex";
+import { CalendarHeader, CalendarGrid, CalendarNote, layout } from "./demo-parts";
+export function ReadOnly() {
+  return (
+    <div {...stylex.props(layout.stack)}>
+      <Calendar isReadOnly aria-label="Event date" defaultValue={today(getLocalTimeZone())}>
+        <CalendarHeader />
+        <CalendarGrid />
+      </Calendar>
+      <CalendarNote>Calendar is read-only</CalendarNote>
+    </div>
+  );
+}

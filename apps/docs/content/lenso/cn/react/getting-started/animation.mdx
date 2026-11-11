@@ -1,0 +1,60 @@
+---
+title: "动画"
+description: "保留原生过渡、中断行为与减少动态效果偏好。"
+navigationGroup: "手册"
+navigationOrder: 14
+---
+
+## 原生状态
+
+组件样式映射响应原生展开、关闭、开始和结束状态属性。组合覆盖层时，应保留这些属性与部件生命周期。通过无关计时器隐藏元素可能中断关闭流程与焦点恢复。
+
+## 自定义过渡
+
+只有在组件公开所需状态时，才通过 `xstyle` 添加过渡。视觉移动优先使用透明度与变换；测试快速开关中断，避免在每次指针移动时触发布局动画。
+
+覆盖过渡前请查看组件 StyleX 源码与实际 API。不同系列没有统一的动画属性。
+
+## 减少动态效果
+
+自定义应用样式应尊重用户的动态效果偏好：
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  .project-transition {
+    animation: none;
+    transition: none;
+  }
+}
+```
+
+该应用规则不替代原生组件的状态与完成处理。启用减少动态效果后，仍应测试焦点恢复与关闭行为。
+
+## 弹性控件
+
+Primary Tabs 默认启用 `elastic`。设置 `<Tabs elastic={false}>` 可以关闭标签组的按压反馈，保留 indicator 的拖拽与 `lift`。Secondary Tabs 不启用这种反馈。
+
+自定义控件可以直接组合公开 Hook 与样式变量：
+
+```tsx
+import { useElasticRef } from "@lenso/glass/react";
+import * as stylex from "@stylexjs/stylex";
+
+const styles = stylex.create({
+  elastic: {
+    scale: "var(--lg-press-scale, 1 1)",
+    translate: "var(--lg-press-translate, 0px 0px)",
+  },
+});
+
+function ElasticButton() {
+  const ref = useElasticRef<HTMLButtonElement>(undefined);
+  return (
+    <button ref={ref} {...stylex.props(styles.elastic)}>
+      Press me
+    </button>
+  );
+}
+```
+
+Hook 管理指针跟踪、弹簧回弹和清理；组件仍负责原生语义、焦点与键盘激活。它不自动添加玻璃材质，可以搭配自己的表面样式。降低动态效果遵循共享动效偏好。

@@ -1,0 +1,32 @@
+{
+  "name": "create-lenso-docs",
+  "version": "0.2.0",
+  "description": "Create a content-only Lenso Docs project",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LioRael/lenso-ui.git",
+    "directory": "packages/create-docs"
+  },
+  "bin": {
+    "create-lenso-docs": "./src/cli.ts"
+  },
+  "files": [
+    "src/",
+    "template/",
+    "LICENSE",
+    "README.md"
+  ],
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "bun build src/cli.ts --target=bun --external '*' --outfile /dev/null",
+    "test": "bun test",
+    "typecheck": "bun check --no-script --noEmit"
+  },
+  "engines": {
+    "bun": ">=1.4.4"
+  }
+}

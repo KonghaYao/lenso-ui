@@ -1,0 +1,52 @@
+---
+title: "Theming"
+description: "One Apple semantic theme, with explicit Web extensions."
+navigationGroup: "Handbook"
+navigationOrder: 11
+---
+
+## Load the theme
+
+```tsx
+import "@lenso/tokens/styles.css";
+```
+
+The supplied iOS/iPadOS 27 Figma file defines the available light/dark colors and Elevated backgrounds. Missing increased-contrast, placeholder and system-link roles temporarily use explicitly documented UIKit 26.5 samples; missing Web states retain Lenso recipes. These are fallbacks, not verified iOS 27 native values. All sources resolve into one token matrix, with no selectable legacy palette.
+
+## Configure a product tint
+
+Use the shared tint helper to pair the fill with readable text. Its input is normalized sRGB, not an arbitrary CSS string. It does not recolor success, warning or error feedback.
+
+```tsx
+import { defineTheme, tintOverrides, themeToCSS } from "@lenso/tokens";
+import { ThemeScope } from "@lenso/ui";
+
+const theme = defineTheme({
+  name: "project",
+  light: tintOverrides([0.3, 0.1, 0.8], "light"),
+  dark: tintOverrides([0.3, 0.1, 0.8], "dark"),
+  lightIncreased: tintOverrides([0.3, 0.1, 0.8], "light", "increased"),
+  darkIncreased: tintOverrides([0.3, 0.1, 0.8], "dark", "increased"),
+});
+
+<>
+  <style>{themeToCSS(theme)}</style>
+  <ThemeScope theme="light" data-lenso-theme={theme.name}>
+    {/* Application content */}
+  </ThemeScope>
+</>;
+```
+
+Load generated theme CSS after the default stylesheet. It follows `prefers-contrast: more`; `ThemeScope contrast="standard"` or `contrast="increased"` selects an explicit variant. `level="elevated"` resolves the sampled elevated background roles. Nested named themes form independent boundaries; unnamed theme scopes inherit matching named overrides through CSS scope rules.
+
+For an inline map use `themeToVariables(theme, "dark", "increased")`. The caller must update the map when its appearance or contrast changes. Inline overrides take precedence over stylesheet media rules. An increased-contrast configuration inherits its corresponding standard overrides before applying its own keys; a custom tint should provide all four variants as above.
+
+## Semantic roles
+
+Use label roles for text, background roles for content layers, fill roles for control shapes, and status roles for business feedback. `label-on-tint` belongs on a tint fill; `tint-text` belongs on ordinary content backgrounds. Do not use `system-*` source colors as editable theme keys. Material paints, optical parameters and control state recipes are internal.
+
+Font and shape overrides use `font-body`, `shape-content` and `shape-field`. Component geometry remains component-owned. Custom CSS colors are syntax-validated; arbitrary overrides still require verification on their actual backgrounds.
+
+## Portals and component styles
+
+ThemeScope synchronizes theme variables and appearance context to portalled controls, including changes to system contrast preferences. Use `xstyle` for local composition and retain the full StyleX output. The framework's documentation shell maps its own CSS interface to these same roles; it does not own another palette.

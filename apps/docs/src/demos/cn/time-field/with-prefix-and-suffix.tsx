@@ -1,0 +1,24 @@
+"use client";
+
+// Copyright NextUI Inc. SPDX-License-Identifier: Apache-2.0.
+import { ChevronDown, Clock } from "@gravity-ui/icons";
+import { TimeField } from "@lenso/ui";
+import * as stylex from "@stylexjs/stylex";
+import { styles } from "../../en/date-field/demo-styles";
+export function WithPrefixAndSuffix() {
+  return (
+    <TimeField xstyle={styles.field} name="time">
+      <TimeField.Label>时间</TimeField.Label>
+      <TimeField.Group>
+        <TimeField.Prefix>
+          <Clock {...stylex.props(styles.icon)} aria-hidden="true" />
+        </TimeField.Prefix>
+        <TimeField.Input>{(segment) => <TimeField.Segment segment={segment} />}</TimeField.Input>
+        <TimeField.Suffix>
+          <ChevronDown {...stylex.props(styles.icon)} aria-hidden="true" />
+        </TimeField.Suffix>
+      </TimeField.Group>
+      <TimeField.Description>输入时间</TimeField.Description>
+    </TimeField>
+  );
+}

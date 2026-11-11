@@ -1,0 +1,26 @@
+"use client";
+
+import * as stylex from "@stylexjs/stylex";
+import { TagGroup } from "@lenso/ui";
+import { Description, Label } from "../../en/tag-group/text";
+import { Categories, styles } from "../../en/tag-group/categories";
+export function TagGroupDisabled() {
+  return (
+    <div {...stylex.props(styles.disabled)}>
+      <TagGroup aria-label="已禁用的标签" selectionMode="single">
+        <Label>已禁用的标签</Label>
+        <TagGroup.List>
+          <Categories disabled count={3} />
+        </TagGroup.List>
+        <Description>部分标签已禁用</Description>
+      </TagGroup>
+      <TagGroup aria-label="禁用的键" disabledKeys={new Set(["travel"])} selectionMode="single">
+        <Label>禁用的键</Label>
+        <TagGroup.List>
+          <Categories count={3} />
+        </TagGroup.List>
+        <Description>通过 disabledKeys 属性禁用的标签</Description>
+      </TagGroup>
+    </div>
+  );
+}

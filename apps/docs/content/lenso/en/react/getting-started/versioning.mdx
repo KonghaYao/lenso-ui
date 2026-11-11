@@ -1,0 +1,28 @@
+---
+title: "Versioning"
+description: "Lenso owns its release versions, public names and compatibility decisions."
+navigationGroup: "Overview"
+navigationOrder: 4
+---
+
+## Active version
+
+Match the versions of `@lenso/ui` and `@lenso/tokens`, and use documentation for that release. The documentation header and generated contract read the active UI version from `packages/ui/package.json`; a successful source build is not an npm publication announcement.
+
+A build using an older package manifest must not label itself as the future candidate. Rebuild the documentation and contract after merging package changes.
+
+## Public names
+
+`Menu` is the popup command family. There is no public Dropdown compatibility export. Historical names may remain in private provenance and raw example reference identifiers. A redirect from an old documentation URL is navigation convenience, not an API alias.
+
+Native API changes require a compatibility decision based on the actual exported TypeScript contracts and runtime behavior. An upstream library's version number is not a Lenso compatibility promise.
+
+## Reference provenance
+
+Lenso defines its own design direction, public contracts and releases. Historical upstream releases and migration instructions are not Lenso guidance and do not appear in public navigation, search, sitemap or copied Markdown.
+
+Preserved license notices and source hashes keep derivation auditable without making reference content the product's user-facing documentation.
+
+## Reproducible consumers
+
+Docs and tooling consume the same versioned authored index and native API. Regenerate them from the current source, not a neighboring checkout's generated output. Keep full example scopes and missing-reference checks when changing public names; a partial browser run must remain explicitly partial.

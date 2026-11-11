@@ -1,0 +1,36 @@
+---
+title: "Colors"
+description: "Semantic colors for content, controls, feedback and materials."
+navigationGroup: "Handbook"
+navigationOrder: 10
+---
+
+## One semantic color system
+
+The supplied iOS/iPadOS 27 Figma file defines the available light/dark colors and Elevated backgrounds. Missing increased-contrast, placeholder and system-link roles temporarily use explicitly documented UIKit 26.5 samples; missing Web states retain Lenso recipes. These are fallbacks, not verified iOS 27 native values. All sources resolve into one token matrix, with no selectable legacy palette.
+
+| Role                                                                               | Use                                                   |
+| ---------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `--lenso-label-primary`, `-secondary`, `-tertiary`, `-quaternary`                  | Ordinary text hierarchy                               |
+| `--lenso-label-placeholder`                                                        | Input placeholder                                     |
+| `--lenso-background-primary`, `-secondary`, `-tertiary`                            | Standard content layers                               |
+| `--lenso-background-grouped-primary`, `-secondary`, `-tertiary`                    | Grouped content layers                                |
+| `--lenso-fill-primary`, `-secondary`, `-tertiary`, `-quaternary`                   | Control shapes, not interchangeable page backgrounds  |
+| `--lenso-separator`, `--lenso-separator-opaque`                                    | Transparent / opaque division                         |
+| `--lenso-tint`, `--lenso-label-on-tint`, `--lenso-tint-text`                       | Action fill, paired foreground, text action           |
+| `--lenso-link`                                                                     | Navigation link                                       |
+| `--lenso-action-destructive`, `--lenso-action-destructive-text`                    | Destructive action fill / text                        |
+| `--lenso-status-{success,warning,error,info}-{indicator,text,fill,on-fill,border}` | Business feedback; choose the role for the actual use |
+| `--lenso-focus-ring`, `--lenso-focus-ring-backing`                                 | Keyboard focus and backing                            |
+| `--lenso-selection-fill`, `--lenso-selection-text`                                 | Selected content                                      |
+| `--lenso-scrim`                                                                    | Modal backdrop                                        |
+
+A status indicator is not necessarily suitable for normal-sized text. `status-*-text` is measured against sampled ordinary backgrounds; `status-*-on-fill` is paired with the corresponding status fill. Content images, user-selected colors, chart series and syntax highlighting retain their own content meaning.
+
+## Materials
+
+Material foregrounds depend on blending and the backdrop. Do not use an ordinary label color as a substitute for a material foreground recipe. Reduced transparency and high-contrast material fallbacks are Web adaptations, with opaque surfaces and ordinary foregrounds. System forced colors take precedence over brand colors.
+
+## Customization
+
+Configure colors with the [theme API](./theming). The Theme Builder changes the same semantic configuration as application code. There is no alternative Apple palette to enable and no legacy palette to maintain. Verify custom colors against actual content, including focus, disabled states, transparency and both appearances.

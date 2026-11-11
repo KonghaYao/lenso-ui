@@ -1,0 +1,57 @@
+import * as stylex from "@stylexjs/stylex";
+
+export const styles = stylex.create({
+  row: { display: "flex", flexWrap: "wrap", gap: 12 },
+  full: { width: 400, display: "flex", flexDirection: "column", gap: 12 },
+  social: { width: "100%", maxWidth: 320, display: "flex", flexDirection: "column", gap: 12 },
+  stretch: { width: "100%" },
+  column: { display: "flex", flexDirection: "column", gap: 24 },
+  section: { display: "flex", flexDirection: "column", gap: 8 },
+  muted: { fontSize: 14, color: "var(--lenso-label-secondary)" },
+  upgrade: {
+    position: "relative",
+    zIndex: 0,
+    borderRadius: 9999,
+    paddingInline: 40,
+    paddingBlock: 12,
+    fontWeight: 450,
+    color: "var(--lenso-label-primary)",
+    backgroundImage:
+      "linear-gradient(to top,var(--lenso-background-secondary),var(--lenso-background-tertiary))",
+    filter: { default: "none", ":hover": "brightness(1.05)" },
+    transform: { default: "none", ":active": "scale(.95)" },
+    transitionProperty: "transform, filter, background-image",
+    transitionDuration: { default: "300ms", "@media (prefers-reduced-motion: reduce)": "0ms" },
+    transitionTimingFunction: "cubic-bezier(.34,1.56,.64,1)",
+    boxShadow: "var(--lenso-surface-shadow)",
+    "::before": {
+      content: '""',
+      position: "absolute",
+      inset: 0,
+      zIndex: 0,
+      borderRadius: "inherit",
+      padding: 1.5,
+      pointerEvents: "none",
+      backgroundImage:
+        "linear-gradient(315deg,var(--lenso-control-border) 0%,var(--lenso-background-tertiary) 50%,var(--lenso-control-border-strong) 100%)",
+      maskImage: "linear-gradient(#fff 0 0),linear-gradient(#fff 0 0)",
+      maskClip: "content-box,border-box",
+      maskComposite: "exclude",
+    },
+  },
+  custom: {
+    opacity: { default: 1, ":is([data-pending])": 0.4 },
+    fontSize: 16,
+    fontWeight: 600,
+    boxShadow: "var(--lenso-surface-shadow)",
+    textShadow: "0 1px 2px var(--lenso-material-control-drop)",
+    borderRadius: 9999,
+    height: 44,
+    paddingInline: 24,
+    color: "var(--lenso-label-on-tint)",
+    backgroundColor: {
+      default: "var(--lenso-tint)",
+      ":hover": "var(--lenso-control-tint-hover-fill)",
+    },
+  },
+});

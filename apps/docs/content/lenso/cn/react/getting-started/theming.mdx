@@ -1,0 +1,52 @@
+---
+title: "主题"
+description: "统一采用 Apple 语义颜色，并明确 Web 扩展。"
+navigationGroup: "手册"
+navigationOrder: 11
+---
+
+## 加载主题
+
+```tsx
+import "@lenso/tokens/styles.css";
+```
+
+当前以指定的 iOS/iPadOS 27 Figma 文件提供的明暗颜色和 Elevated 背景为准。文件缺少的增强对比度、placeholder、系统链接色暂用明确标注的 UIKit 26.5 样本；缺失的 Web 状态保留 Lenso 配方。这些补充不代表 iOS 27 原生认证。所有值进入同一 token 矩阵，不提供旧主题切换。
+
+## 配置产品强调色
+
+使用共享 tint 工具生成强调色及配对文字。输入是 0–1 范围的 sRGB 通道；它不会重染成功、警告和错误状态。
+
+```tsx
+import { defineTheme, tintOverrides, themeToCSS } from "@lenso/tokens";
+import { ThemeScope } from "@lenso/ui";
+
+const theme = defineTheme({
+  name: "project",
+  light: tintOverrides([0.3, 0.1, 0.8], "light"),
+  dark: tintOverrides([0.3, 0.1, 0.8], "dark"),
+  lightIncreased: tintOverrides([0.3, 0.1, 0.8], "light", "increased"),
+  darkIncreased: tintOverrides([0.3, 0.1, 0.8], "dark", "increased"),
+});
+
+<>
+  <style>{themeToCSS(theme)}</style>
+  <ThemeScope theme="light" data-lenso-theme={theme.name}>
+    {/* 应用内容 */}
+  </ThemeScope>
+</>;
+```
+
+将导出的 CSS 放在默认主题之后。它会响应 `prefers-contrast: more`；也可以通过 `ThemeScope contrast="standard"` 或 `contrast="increased"` 显式选择。`level="elevated"` 使用原生采样的浮起背景。嵌套的命名主题形成独立边界；未命名作用域通过 CSS scope 规则继承对应外观的主题覆盖。
+
+需要行内变量时，使用 `themeToVariables(theme, "dark", "increased")`。调用者必须在外观或对比度改变时更新这份变量；行内值优先于样式表媒体规则。增强对比度配置先继承相应标准配置，再应用自身覆盖，因此自定义 tint 建议像示例一样提供全部四种配置。
+
+## 语义角色
+
+文字使用 label，内容层使用 background，控件形状使用 fill，业务反馈使用 status。`label-on-tint` 用于强调色实色填充上的文字，`tint-text` 用于普通内容背景上的文字动作。原生 `system-*` 不是可编辑主题键；材质 paint、光学参数与交互状态配方由组件内部管理。
+
+字体和形状配置使用 `font-body`、`shape-content`、`shape-field`。组件尺寸仍由组件规范决定。自定义 CSS 值会接受语法校验，但任意配色仍需在真实背景上验证。
+
+## Portal 与组件样式
+
+ThemeScope 会把主题变量和外观上下文同步给浮层，也响应系统对比度偏好的变化。局部样式使用 `xstyle` 并保留完整 StyleX 输出。文档框架将自己的样式接口映射到同一语义体系，不维护第二份颜色表。

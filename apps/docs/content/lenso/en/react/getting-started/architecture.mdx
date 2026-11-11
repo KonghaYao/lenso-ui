@@ -1,0 +1,64 @@
+---
+title: "Composition"
+description: "Compose public component parts while preserving their native context, props and focus behavior."
+navigationGroup: "Handbook"
+navigationOrder: 15
+---
+
+## Compound components
+
+Use the root and parts exported by the same family. For example, a dialog connects its trigger, portal, backdrop and content through `Modal.Root`:
+
+```tsx
+import { Modal } from "@lenso/ui";
+
+export function Example() {
+  return (
+    <Modal.Root>
+      <Modal.Trigger>Open dialog</Modal.Trigger>
+      <Modal.Portal>
+        <Modal.Backdrop />
+        <Modal.Viewport>
+          <Modal.Popup>
+            <Modal.Title>Account settings</Modal.Title>
+            <Modal.Description>Manage your account preferences.</Modal.Description>
+            <Modal.Close>Close</Modal.Close>
+          </Modal.Popup>
+        </Modal.Viewport>
+      </Modal.Portal>
+    </Modal.Root>
+  );
+}
+```
+
+The root coordinates open state and focus restoration; the heading and description label the popup. Keep these relationships when rearranging the content.
+
+## Interaction boundary
+
+Base UI owns ordinary native controls, navigation and overlays. Lenso composes concrete native parts with component-specific StyleX maps; there is no generic compatibility wrapper that translates every family into another library's API.
+
+ListBox, TagGroup and Table use Lenso's local collection model: stable keys, Set-based selection, registered items and collection-aware focus. They are not React Aria collection wrappers. Read their local signatures rather than assuming a Menu, Select or another library's collection contract.
+
+React Aria Components owns date, time and color models and the supporting parts that depend on those contexts. A date segment, calendar grid or color input section cannot be substituted into an unrelated Base UI field simply because its appearance is similar.
+
+Native HTML owns noninteractive structure. Cards, text surfaces and layout regions do not acquire keyboard behavior merely by being styled.
+
+## Public contracts
+
+The public React exports determine the component family inventory. Native props, refs, state attributes, render composition and callback signatures remain observable. Local variants add presentation without inventing an `onPress` adapter or normalizing every value into a DOM event.
+
+For compound families, compose their contextual parts together. The generated API identifies each actual exported part and declaration source; imported historical snippets are not executable contract evidence.
+
+## Styles and delivery
+
+`@lenso/tokens` supplies themes and compiler-readable StyleX declarations. The official StyleX integration compiles package and application declarations together. Import theme CSS from every rendering document. Compiler tooling stays outside browser JavaScript.
+
+## Documentation as a projection
+
+Public documentation is authored separately from the immutable reference archive. One versioned index combines authored guides, the current native API and local runnable example placements. Rendering, navigation, search, sitemap, copied Markdown and example-proof planning consume that index.
+
+The reference archive remains an integrity-checked provenance input, not a public release history or migration guide. Removing public archive pages does not excuse dropping their maintained example scenarios: those scenarios belong on the corresponding Lenso component page.
+
+## Evidence boundaries
+
+An export proves availability, and a registered local module proves a runnable placement. Neither proves visual parity, accessible keyboard operation or WCAG compliance. Source colors can have known normal-text contrast failures; report them rather than claiming certification.

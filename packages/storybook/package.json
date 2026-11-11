@@ -1,0 +1,33 @@
+{
+  "name": "@lenso/storybook",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare:packages": "turbo run build --filter=@lenso/ui --filter=@lenso/tokens --output-logs=errors-only",
+    "dev": "bun run prepare:packages && storybook dev -p 6006",
+    "build": "bun run prepare:packages && storybook build",
+    "typecheck": "bun run prepare:packages && bun check --no-script --noEmit"
+  },
+  "dependencies": {
+    "@lenso/tokens": "workspace:*",
+    "@lenso/ui": "workspace:*",
+    "@stylexjs/stylex": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@base-ui/react": "catalog:",
+    "@internationalized/date": "3.12.4",
+    "@storybook/addon-a11y": "10.6.6",
+    "@storybook/addon-docs": "10.6.6",
+    "@storybook/react-vite": "10.6.6",
+    "@stylexjs/unplugin": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "storybook": "10.6.6",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}

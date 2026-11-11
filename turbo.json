@@ -1,0 +1,199 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build", "typecheck"],
+      "outputs": ["dist/**", ".next/**"]
+    },
+    "build:dev": {
+      "dependsOn": ["^build:dev"],
+      "outputs": ["dist/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "test": {
+      "dependsOn": [],
+      "outputs": []
+    },
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "@lenso/docs-starter#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["out/**"]
+    },
+    "@lenso/docs#build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/THIRD_PARTY_NOTICES.md", "$TURBO_ROOT$/bun.lock"],
+      "outputs": ["dist/**"]
+    },
+    "@lenso/docs#typecheck": {
+      "dependsOn": ["build"],
+      "outputs": []
+    },
+    "@lenso/ui-docs#generate:api": {
+      "cache": false,
+      "dependsOn": ["^build"],
+      "inputs": [
+        "scripts/generate-docs.ts",
+        "scripts/generate-api-reference.ts",
+        "scripts/api-artifact.ts",
+        "$TURBO_ROOT$/.oxfmtrc.json",
+        "$TURBO_ROOT$/bun.lock",
+        "$TURBO_ROOT$/packages/ui/src/**/*.ts",
+        "$TURBO_ROOT$/packages/ui/src/**/*.tsx",
+        "!$TURBO_ROOT$/packages/ui/src/**/*.test.*",
+        "!$TURBO_ROOT$/packages/ui/src/**/*.browser.*",
+        "$TURBO_ROOT$/packages/ui/package.json",
+        "$TURBO_ROOT$/packages/tokens/src/**"
+      ],
+      "env": ["API_REFERENCE_DEPENDENCY_ROOT"],
+      "outputs": ["src/generated/api-reference.json", ".cache/api.json"]
+    },
+    "@lenso/ui-docs#generate:content": {
+      "cache": false,
+      "dependsOn": ["generate:api"],
+      "inputs": [
+        "scripts/generate-docs.ts",
+        "scripts/generate-live-registry.ts",
+        "scripts/generate-page-documents.ts",
+        "scripts/static-search.ts",
+        "scripts/docs-projection.ts",
+        "src/lib/demo-locale.ts",
+        "src/lib/native-api-section.ts",
+        "src/lib/api-property-groups.ts",
+        "content/example-catalog.json",
+        "content/lenso/**",
+        "!content/lenso/*/react/components/**",
+        "src/demos/en/**",
+        "src/demos/cn/**",
+        "src/demos/localized-manifest.json",
+        "$TURBO_ROOT$/packages/ui/src/components/index.ts",
+        "$TURBO_ROOT$/packages/ui/package.json",
+        "$TURBO_ROOT$/bun.lock"
+      ],
+      "outputs": [
+        "src/demos/generated.ts",
+        "src/demos/live-manifest.json",
+        "src/generated/lenso-docs-index.json",
+        "src/generated/documents/**",
+        "content/lenso/*/react/components/**",
+        ".cache/content.json"
+      ]
+    },
+    "@lenso/ui-docs#generate:contract": {
+      "cache": false,
+      "dependsOn": ["generate:content"],
+      "inputs": [
+        "scripts/generate-docs.ts",
+        "scripts/generate-lenso-contract.ts",
+        "src/lib/local-example-files.ts",
+        "src/lib/docs-directory.ts",
+        "content/lenso/**",
+        "!content/lenso/*/react/components/**",
+        "src/demos/demo.stylex.ts",
+        "src/demos/en/**",
+        "src/demos/cn/**",
+        "src/demos/shared/**",
+        "$TURBO_ROOT$/packages/ui/package.json",
+        "$TURBO_ROOT$/packages/ui/src/**",
+        "$TURBO_ROOT$/packages/tokens/src/**",
+        "$TURBO_ROOT$/packages/tokens/themes/**",
+        "$TURBO_ROOT$/packages/tokens/package.json",
+        "$TURBO_ROOT$/packages/devtools/src/contract/**",
+        "$TURBO_ROOT$/bun.lock"
+      ],
+      "outputs": ["src/generated/lenso-contract.json", ".cache/contract.json"]
+    },
+    "@lenso/ui-docs#generate": {
+      "cache": false,
+      "dependsOn": ["generate:contract"],
+      "inputs": [
+        "scripts/generate-docs.ts",
+        "scripts/static-search.ts",
+        "scripts/docs-projection.ts",
+        "scripts/example-proof-plan.ts",
+        "src/lib/heading-id.ts",
+        "src/lib/native-api-section.ts",
+        "src/lib/api-property-groups.ts",
+        "content/lenso/**",
+        "!content/lenso/*/react/components/**",
+        "content/example-catalog.json",
+        "$TURBO_ROOT$/bun.lock"
+      ],
+      "outputs": ["public/search/**", ".cache/static-search.json"]
+    },
+    "@lenso/ui-docs#typecheck": {
+      "dependsOn": ["^build", "generate"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!src/generated/**",
+        "!src/demos/generated.ts",
+        "!src/demos/live-manifest.json",
+        "!content/lenso/*/react/components/**",
+        "!public/search/**",
+        "!.cache/**"
+      ],
+      "outputs": []
+    },
+    "@lenso/ui-docs#build": {
+      "dependsOn": ["^build", "typecheck", "generate"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!src/generated/**",
+        "!src/demos/generated.ts",
+        "!src/demos/live-manifest.json",
+        "!content/lenso/*/react/components/**",
+        "!public/search/**",
+        "!.cache/**"
+      ],
+      "env": ["LENSO_DOCS_SITE", "API_REFERENCE_DEPENDENCY_ROOT"],
+      "outputs": ["out/**"]
+    },
+    "@lenso/ui-docs#test": {
+      "dependsOn": [],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!src/generated/**",
+        "!src/demos/generated.ts",
+        "!src/demos/live-manifest.json",
+        "!content/lenso/*/react/components/**",
+        "!public/search/**",
+        "!.cache/**"
+      ],
+      "outputs": []
+    },
+    "@lenso/ui-docs#dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "@lenso/storybook#build": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        ".storybook/**",
+        "stories/**/*.tsx",
+        "stories/**/*.ts",
+        "package.json",
+        "tsconfig.json"
+      ],
+      "outputs": ["storybook-static/**"]
+    },
+    "@lenso/storybook#dev": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
+    },
+    "create-lenso-docs#build": {
+      "outputs": []
+    }
+  },
+  "globalDependencies": [
+    "THIRD_PARTY_NOTICES.md",
+    "tsconfig.base.json",
+    "scripts/preserve-watch-output.ts",
+    "scripts/legal-attribution.ts"
+  ]
+}

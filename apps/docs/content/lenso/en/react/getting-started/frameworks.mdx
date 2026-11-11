@@ -1,0 +1,281 @@
+---
+title: "Frameworks"
+description: "Choose the supported StyleX integration for your application."
+navigationGroup: "Overview"
+navigationOrder: 3
+---
+
+## Vite and Rolldown
+
+For a new React TypeScript application, start with the official Vite template. Existing applications can skip these scaffold commands:
+
+```sh
+bunx create-vite@9.3.4 my-app --template react-ts
+cd my-app
+bun install
+```
+
+From the application root, install Lenso and the official StyleX integration:
+
+```sh
+bun add @lenso/ui@0.10.0 @lenso/tokens@0.10.0 @stylexjs/stylex@0.19.1
+bun add -d @stylexjs/unplugin@0.19.1
+```
+
+This setup was verified with Vite 8.3.8, React 19.3.1 and `@vitejs/plugin-react` 6.3.0. Lenso ships ordinary modules containing StyleX declarations; the plugin compiles library and application styles together.
+
+### Vite configuration
+
+Replace the template's `vite.config.ts` with this complete configuration, or merge its StyleX plugin before your existing React plugin. Keep any other application-specific settings. `rootDir` identifies the application root for resolving imported StyleX constants.
+
+```ts
+// vite.config.ts
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { unplugin as stylex } from "@stylexjs/unplugin";
+
+export default defineConfig({
+  optimizeDeps: {
+    exclude: ["@lenso/ui", "@lenso/tokens", "@lenso/glass"],
+    include: ["use-sync-external-store/shim", "use-sync-external-store/shim/with-selector"],
+  },
+  plugins: [
+    stylex.vite({
+      dev: false,
+      runtimeInjection: false,
+      useCSSLayers: false,
+      lightningcssOptions: { exclude: 4 },
+      unstable_moduleResolution: {
+        type: "commonJS",
+        rootDir: import.meta.dirname,
+      },
+    }),
+    react(),
+  ],
+});
+```
+
+The named `unplugin` export also typechecks with the template's NodeNext configuration. `optimizeDeps.exclude` keeps Lenso declarations in StyleX compilation during development. The `optimizeDeps.include` entries pre-bundle Base UI's CommonJS dependencies while Lenso remains unbundled for style compilation; see [Vite dependency optimization](https://vite.dev/config/dep-optimization-options#optimizedeps-exclude).
+
+### Vite entry and example
+
+Replace the template's `src/main.tsx` and `src/App.tsx`. The entry loads theme/base CSS and supplies a theme scope, which Lenso portals inherit. Use `theme="dark"` for a dark scope. These examples omit the template's `index.css` and `App.css` imports; those starter styles constrain the page and restyle buttons. Keep your own global CSS when integrating into an existing app.
+
+```tsx
+// src/main.tsx
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { ThemeScope } from "@lenso/ui";
+import "@lenso/tokens/styles.css";
+import App from "./App";
+
+createRoot(document.getElementById("root")!).render(
+  <StrictMode><ThemeScope theme="light"><App /></ThemeScope></StrictMode>,
+);
+```
+
+Import tokens directly from `@lenso/tokens/tokens.stylex.const` when referencing them inside `stylex.create`. This example verifies a local `xstyle` override, state updates and a portalled Glass menu:
+
+```tsx
+// src/App.tsx
+import { useState } from "react";
+import * as stylex from "@stylexjs/stylex";
+import { tokens } from "@lenso/tokens/tokens.stylex.const";
+import { Button, GlassButton, Menu } from "@lenso/ui";
+
+const styles = stylex.create({
+  page: {
+    minHeight: "100vh",
+    padding: 32,
+    backgroundColor: tokens.backgroundGroupedPrimary,
+    color: tokens.labelPrimary,
+  },
+  action: { minWidth: 180 },
+});
+
+export default function App() {
+  const [count, setCount] = useState(0);
+  return (
+    <main {...stylex.props(styles.page)}>
+      <Button variant="prominent" xstyle={styles.action} onClick={() => setCount(count + 1)}>
+        Count {count}
+      </Button>
+      <Menu.Root morphTrigger={false}>
+        <Menu.Trigger render={<GlassButton />}>Actions</Menu.Trigger>
+        <Menu.Portal>
+          <Menu.Positioner>
+            <Menu.Popup><Menu.Item onClick={() => setCount(0)}>Reset count</Menu.Item></Menu.Popup>
+          </Menu.Positioner>
+        </Menu.Portal>
+      </Menu.Root>
+    </main>
+  );
+}
+```
+
+### Verify Vite
+
+Start the development server and open its printed URL:
+
+```sh
+bun run dev
+```
+
+Then stop it, build the application, and open the production preview URL:
+
+```sh
+bun run build
+bun run preview
+```
+
+In both modes the Count button should be blue, rounded and at least 180px wide. Clicking it increments the value; Actions opens a styled menu and Reset count resets it. Check the dark scope as well. A successful build alone does not prove stylesheet delivery: missing theme/base CSS or an unconnected StyleX plugin can leave controls unstyled. No Lenso build adapter or generated package metadata is required.
+
+### Rolldown and SSR
+
+Rolldown uses `stylex.rolldown`. Preserve `:dir()` when choosing Lightning CSS targets. The runnable setup above verifies the Vite client application; it does not configure a Rolldown or SSR host.
+
+For Vite SSR, compile the source packages instead of externalizing them:
+
+```ts
+ssr: { noExternal: ["@lenso/ui", "@lenso/tokens", "@lenso/glass"] }
+```
+
+Include `@lenso/docs` when using the documentation framework. Plain Node imports do not compile StyleX declarations. Styles used only on the server must also enter the application's CSS compilation; a client-only module graph does not establish their delivery.
+
+## Next.js App Router
+
+Run these commands from an existing TypeScript App Router project. This setup was verified with Next.js 16.4.6 (the default Turbopack build), React 19.3.1 and the package versions below. It uses the official StyleX Babel and PostCSS plugins.
+
+```sh
+bun add @lenso/ui@0.10.0 @lenso/tokens@0.10.0 @stylexjs/stylex@0.19.1
+bun add -d @babel/core@7.29.7 @stylexjs/babel-plugin@0.19.1 @stylexjs/postcss-plugin@0.19.1
+```
+
+### Configure compilation
+
+Merge `transpilePackages` into your existing Next configuration. Save the Babel configuration as `babel.config.json` at the project root.
+
+```ts
+// next.config.ts
+export default { transpilePackages: ["@lenso/tokens"] };
+```
+
+```json
+{
+  "presets": ["next/babel"],
+  "plugins": [["@stylexjs/babel-plugin", {
+    "dev": false,
+    "runtimeInjection": false,
+    "treeshakeCompensation": true,
+    "unstable_moduleResolution": { "type": "commonJS" }
+  }]]
+}
+```
+
+Save the following as `postcss.config.cjs` at the same root. Merge its plugin with any existing PostCSS plugins rather than keeping two PostCSS configuration files. The explicit package glob scans the installed declarations for every component.
+
+```js
+// postcss.config.cjs
+const babel = require("./babel.config.json");
+module.exports = {
+  plugins: {
+    "@stylexjs/postcss-plugin": {
+      include: [
+        "./src/**/*.{js,jsx,ts,tsx}",
+        "./app/**/*.{js,jsx,ts,tsx}",
+        "./components/**/*.{js,jsx,ts,tsx}",
+        "./node_modules/@lenso/tokens/dist/**/*.js",
+      ],
+      babelConfig: {
+        babelrc: false,
+        configFile: false,
+        parserOpts: { plugins: ["typescript", "jsx"] },
+        plugins: babel.plugins,
+      },
+    },
+  },
+};
+```
+
+Keep these globs relative to the application root containing `node_modules`. Extend them for other source directories, including server-only StyleX declarations. Do not derive this glob with `require.resolve("@lenso/tokens/package.json")`: that entry is not exported. Resolving `styles.css` is also unsuitable here because Turbopack can rewrite it into a virtual CSS-module identifier; the build may then succeed without emitting component styles.
+
+### Load CSS and the theme
+
+Create the global stylesheet and import it in the root layout. If the project uses `src/app`, put these files there instead. Keep the project's existing layout metadata and other providers.
+
+```css
+/* app/globals.css */
+@import "@lenso/tokens/styles.css";
+@stylex;
+```
+
+```tsx
+// app/layout.tsx
+import "./globals.css";
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+
+Keep the root layout as a Server Component. Place `ThemeScope` inside a client boundary, as in the page below; use `theme="dark"` for a dark scope. Lenso portals inherit their containing `ThemeScope`. Every root layout and custom `global-error` or `global-not-found` document that replaces the layout must import the stylesheet. Next owns CSS delivery, hashing and manifests.
+
+### Render and verify
+
+This client page exercises an application `xstyle` override, theme tokens, state and a portalled Glass menu. In StyleX declarations, import tokens directly from `@lenso/tokens/tokens.stylex.const` so the compiler can resolve constants.
+
+```tsx
+// app/page.tsx
+"use client";
+
+import { useState } from "react";
+import * as stylex from "@stylexjs/stylex";
+import { tokens } from "@lenso/tokens/tokens.stylex.const";
+import { Button, GlassButton, Menu, ThemeScope } from "@lenso/ui";
+
+const styles = stylex.create({
+  page: {
+    minHeight: "100vh",
+    padding: 32,
+    backgroundColor: tokens.backgroundGroupedPrimary,
+    color: tokens.labelPrimary,
+  },
+  action: { minWidth: 180 },
+});
+
+export default function Page() {
+  const [count, setCount] = useState(0);
+  return (
+    <ThemeScope theme="light">
+      <main {...stylex.props(styles.page)}>
+        <Button variant="prominent" xstyle={styles.action} onClick={() => setCount(count + 1)}>
+          Count {count}
+        </Button>
+        <Menu.Root morphTrigger={false}>
+          <Menu.Trigger render={<GlassButton />}>Actions</Menu.Trigger>
+          <Menu.Portal>
+            <Menu.Positioner>
+              <Menu.Popup><Menu.Item onClick={() => setCount(0)}>Reset count</Menu.Item></Menu.Popup>
+            </Menu.Positioner>
+          </Menu.Portal>
+        </Menu.Root>
+      </main>
+    </ThemeScope>
+  );
+}
+```
+
+Run the production build and start the resulting application:
+
+```sh
+bun run build
+bun run start
+```
+
+The Count button should be blue, rounded and at least 180px wide. Clicking it increments the value; Actions opens a styled menu and Reset count resets it. An unstyled page is a failed setup even if the build succeeds: check the token CSS import and the PostCSS package glob. After correcting a failed StyleX compilation, if the next build still reports the old source, stop Next, remove only the generated `.next` directory, and rebuild.
+
+[Official Next.js integration](https://stylexjs.com/docs/learn/installation/nextjs/), [official Vite integration](https://stylexjs.com/docs/learn/installation/vite/).

@@ -1,0 +1,101 @@
+// modified by translating demo styling to StyleX.
+import * as stylex from "@stylexjs/stylex";
+export const styles = stylex.create({
+  root: { width: "100%", maxWidth: 448 },
+  full: { width: "100%" },
+  icon: {
+    marginInlineEnd: 12,
+    width: 16,
+    height: 16,
+    flexShrink: 0,
+    color: "var(--lenso-label-secondary)",
+  },
+  actions: {
+    marginBottom: 16,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  buttons: { display: "flex", gap: 8 },
+  smallIcon: { width: 16, height: 16 },
+  muted: { fontSize: 14, color: "var(--lenso-label-secondary)" },
+  column: { display: "flex", flexDirection: "column", gap: 24, width: "100%" },
+  headingGroup: { display: "flex", flexDirection: "column", gap: 4 },
+  heading: { fontSize: 24, fontWeight: 700 },
+  subtitle: {
+    marginBottom: 16,
+    fontSize: 18,
+    fontWeight: 500,
+    color: "var(--lenso-label-secondary)",
+  },
+  category: {
+    fontSize: 16,
+    marginBottom: 8,
+    fontWeight: 500,
+    color: "var(--lenso-label-secondary)",
+  },
+  disabledColumn: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 32,
+    width: "100%",
+  },
+  disabledSection: {
+    width: "100%",
+    maxWidth: 448,
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+  },
+  caption: { fontSize: 14, fontWeight: 500, color: "var(--lenso-label-secondary)" },
+  customRoot: {
+    width: "100%",
+    maxWidth: 448,
+    borderRadius: 16,
+    backgroundColor: "color-mix(in oklab,var(--lenso-background-secondary) 10%,transparent)",
+  },
+  customTrigger: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    transitionProperty: "none",
+    backgroundColor: { default: null, ":hover": "var(--lenso-background-grouped-secondary)" },
+    borderStartStartRadius: {
+      default: null,
+      ':is([data-slot="accordion-item"]:first-child *)': 16,
+    },
+    borderStartEndRadius: { default: null, ':is([data-slot="accordion-item"]:first-child *)': 16 },
+    borderEndStartRadius: {
+      default: null,
+      ':is([data-slot="accordion-item"]:last-child :not([aria-expanded="true"]))': 16,
+    },
+    borderEndEndRadius: {
+      default: null,
+      ':is([data-slot="accordion-item"]:last-child :not([aria-expanded="true"]))': 16,
+    },
+  },
+  image: {
+    height: 44,
+    width: 44,
+    transitionProperty: "scale,rotate,filter",
+    transitionDuration: { default: "300ms", "@media (prefers-reduced-motion: reduce)": "0ms" },
+    transitionTimingFunction: "ease-out",
+    scale: { default: "1", ':is([data-slot="accordion-item"]:hover *)': "1.2" },
+    rotate: { default: "0deg", ':is([data-slot="accordion-item"]:hover *)': "-10deg" },
+    filter: {
+      default: "none",
+      ':is([data-slot="accordion-item"]:hover *)':
+        "drop-shadow(0 4px 3px var(--lenso-material-control-drop))",
+    },
+  },
+  customText: { display: "flex", flexDirection: "column", gap: 0 },
+  customTitle: { lineHeight: "20px", fontWeight: 500 },
+  customSubtitle: {
+    lineHeight: "24px",
+    fontWeight: 400,
+    color: "color-mix(in oklab,var(--lenso-label-secondary) 80%,transparent)",
+  },
+  customIndicator: { color: "color-mix(in oklab,var(--lenso-label-secondary) 50%,transparent)" },
+  customBody: { color: "color-mix(in oklab,var(--lenso-label-secondary) 80%,transparent)" },
+});

@@ -1,0 +1,19 @@
+"use client";
+import { ColorSwatchPicker } from "@lenso/ui";
+import * as stylex from "@stylexjs/stylex";
+import { styles } from "../color-picker/source.stylex";
+import { SourceSwatches } from "./source";
+export function Sizes() {
+  return (
+    <div {...stylex.props(styles.column6)}>
+      {(["xs", "sm", "md", "lg", "xl"] as const).map((size) => (
+        <div key={size} {...stylex.props(styles.row4)}>
+          <span {...stylex.props(styles.width32, styles.muted)}>{size}</span>
+          <ColorSwatchPicker aria-label={`${size} colors`} size={size}>
+            <SourceSwatches />
+          </ColorSwatchPicker>
+        </div>
+      ))}
+    </div>
+  );
+}

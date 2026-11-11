@@ -1,0 +1,57 @@
+---
+title: "Getting started"
+description: "Build React interfaces with Lenso UI components, native interactions and StyleX."
+navigationGroup: "Overview"
+navigationOrder: 0
+---
+
+Lenso UI is a React component library with a shared theme, typed component parts and native keyboard and focus behavior. Import components from `@lenso/ui`, load the theme from `@lenso/tokens`, and use StyleX to customize their presentation.
+
+## Why Lenso UI?
+
+- **Ready-to-use components.** Buttons, forms, navigation and overlays share the same theme and component variants.
+- **Composable parts.** Build a dialog, menu or field from its public parts without replacing the interaction that connects them.
+- **Typed styling.** Use `xstyle` for application styles and semantic CSS variables for colors and surfaces.
+- **Native interactions.** Ordinary interactive components use Base UI; date, time and color components use React Aria's value models and context. Component API tables describe the actual props and events.
+
+## Start building
+
+Follow [Quick start](/docs/react/getting-started/installation) to install the packages, load the theme and configure the build adapter. Then render your first component:
+
+```tsx
+import { Button } from "@lenso/ui";
+
+export function App() {
+  return <Button onClick={() => console.log("Saved")}>Save changes</Button>;
+}
+```
+
+Browse [Components](/docs/react/components) for usage, examples and API details. Learn [Styling](/docs/react/getting-started/stylex) to customize a component, and [Composition](/docs/react/getting-started/architecture) to arrange its parts.
+
+Use [Primitives](/docs/react/primitives/sidebar) when you own the interface's appearance and need behavior or state models. Browse [Templates](/docs/react/templates/photos) for complete interfaces, starting with the Photos library.
+
+## Agent skills
+
+[Agent skills](/docs/react/getting-started/skills) guide component composition, themes, setup and visual review using installed packages and matching documentation.
+
+## FAQ
+
+### Does Lenso UI require a provider?
+
+There is no universal UI provider. Load the theme stylesheet in your application entry, apply a light or dark scope, and keep contextual parts inside their component root.
+
+### Can I customize the components?
+
+Yes. Use a component's variants, compose its public parts, or add StyleX declarations through `xstyle`. [Theming](/docs/react/getting-started/theming) explains shared CSS variables.
+
+### Does it work with TypeScript?
+
+Components export their native prop and ref types. The API reference is generated from the current package, including callback signatures.
+
+### What about accessibility?
+
+Native components supply their keyboard, focus and semantic behavior. Your application still owns labels, content, contrast and any custom composition. Test these together; the library does not certify your application.
+
+## Contribute
+
+Report issues and propose changes in the [Lenso UI repository](https://github.com/LioRael/lenso-ui). Read its contribution policy before changing public behavior. Lenso UI is distributed under Apache-2.0, with the notices required by its source adaptations.

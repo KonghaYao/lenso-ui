@@ -1,0 +1,62 @@
+{
+  "name": "@lenso/primitives",
+  "version": "0.8.0",
+  "description": "Headless product primitives for Lenso UI.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LioRael/lenso-ui.git",
+    "directory": "packages/primitives"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "type": "module",
+  "exports": {
+    "./resize-handle": {
+      "types": "./dist/resize-handle/index.d.ts",
+      "import": "./dist/resize-handle/index.js"
+    },
+    "./data-grid": {
+      "types": "./dist/data-grid/index.d.ts",
+      "import": "./dist/data-grid/index.js"
+    },
+    "./sidebar": {
+      "types": "./dist/sidebar/index.d.ts",
+      "import": "./dist/sidebar/index.js"
+    },
+    "./command": {
+      "types": "./dist/command/index.d.ts",
+      "import": "./dist/command/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsdown --config tsdown.config.ts && tsc -p tsconfig.build.json --declaration --emitDeclarationOnly --noEmit false --outDir dist",
+    "test": "bun test --preload ../../tests/setup/dom.ts src",
+    "typecheck": "bun check --no-script --noEmit"
+  },
+  "dependencies": {
+    "@tanstack/react-table": "catalog:"
+  },
+  "devDependencies": {
+    "@base-ui/react": "catalog:",
+    "@stylexjs/stylex": "catalog:",
+    "@types/bun": "1.4.4",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:"
+  },
+  "peerDependencies": {
+    "@base-ui/react": ">=1.7.0 <2.0.0",
+    "@stylexjs/stylex": ">=0.19.0 <1.0.0",
+    "react": ">=19.2.0 <20.0.0"
+  }
+}
