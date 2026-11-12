@@ -45,11 +45,11 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const registry = "https://registry.npmjs.org/";
 export const packages: ReleasePackage[] = [
   { dir: "packages/tokens", name: "@lenso/tokens", kind: "tokens" },
-  { dir: "packages/glass", name: "@lenso/glass", kind: "glass", version: "0.1.0" },
+  { dir: "packages/glass", name: "@lenso/glass", kind: "glass", version: "0.1.1" },
   { dir: "packages/primitives", name: "@lenso/primitives", kind: "primitives", version: "0.8.0" },
   { dir: "packages/ui", name: "@lenso/ui", kind: "ui" },
-  { dir: "packages/docs", name: "@lenso/docs", kind: "docs", version: "0.2.0" },
-  { dir: "packages/create-docs", name: "create-lenso-docs", kind: "initializer", version: "0.2.0" },
+  { dir: "packages/docs", name: "@lenso/docs", kind: "docs", version: "0.2.1" },
+  { dir: "packages/create-docs", name: "create-lenso-docs", kind: "initializer", version: "0.2.1" },
 ];
 
 export function validateContext(
@@ -307,10 +307,11 @@ async function publish() {
   const version = validateContext(env, head, remoteHead, manifests);
   const temp = await mkdtemp(join(env["RUNNER_TEMP"] ?? tmpdir(), "lenso-release-"));
   try {
+    // One dependency graph: shared dependencies build once, before packing any package.
+    run("bunx", ["turbo", "run", "build", ...packages.map((item) => `--filter=${item.name}`)]);
     const tarballs = [];
     for (const [i, item] of packages.entries()) {
       const packageVersion = item.version ?? version;
-      run("bun", ["run", "--cwd", item.dir, "build"]);
       run("bun", ["pm", "pack", "--cwd", item.dir, "--filename", join(temp, `${i}.tgz`)]);
       const tarball = join(temp, `${i}.tgz`);
       const listing = run("tar", ["-tzf", tarball]).split("\n");
