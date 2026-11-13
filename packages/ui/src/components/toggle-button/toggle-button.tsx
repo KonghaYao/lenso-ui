@@ -1,7 +1,7 @@
 "use client";
 
-import { Toggle as BaseToggle } from "@base-ui/react/toggle";
-import { mergeProps } from "@base-ui/react/merge-props";
+import { Toggle as SdkToggle } from "@ui-sdk/react/toggle";
+import { mergeProps } from "@ui-sdk/react/primitive";
 import { useContext, type ComponentProps, type ReactNode } from "react";
 import {
   buttonStyles,
@@ -13,6 +13,7 @@ import { buttonGroupItemStyles } from "@lenso/tokens/button-group";
 import { toggleButtonStyles } from "@lenso/tokens/toggle-button";
 import { mergeStyle, type StyleXProps } from "../../utils/styled.js";
 import * as stylex from "@stylexjs/stylex";
+import { slotRender } from "../../utils/sdk-render.js";
 import { ToggleButtonGroupContext } from "../toggle-button-group/toggle-button-group.js";
 import {
   ButtonIcon,
@@ -21,7 +22,7 @@ import {
   type ButtonVariant,
 } from "../button/button.js";
 
-export type ToggleButtonRootProps = StyleXProps<ComponentProps<typeof BaseToggle>> & {
+export type ToggleButtonRootProps = StyleXProps<ComponentProps<typeof SdkToggle>> & {
   size?: ButtonSize;
   variant?: ButtonVariant | "default" | "ghost";
   isIconOnly?: boolean;
@@ -72,17 +73,27 @@ export function ToggleButtonRoot({
   );
   return (
     <ButtonSizeContext value={size}>
-      <BaseToggle
+      <SdkToggle
         {...mergeProps(compiled, props)}
         style={mergeStyle(compiled.style, style)}
-        data-slot={props["data-slot"] ?? "toggle-button"}
+        data-lenso-slot={props["data-lenso-slot"] ?? "toggle-button"}
+        render={slotRender(
+          "button",
+          props["data-lenso-slot"] ?? "toggle-button",
+          props.render,
+          group.disabled ? { disabled: true } : undefined,
+        )}
         data-glass="false"
         data-variant={variant}
         data-lenso-group-item={group.orientation ? "" : undefined}
       >
-        {icon != null && <ButtonIcon>{icon}</ButtonIcon>}
-        {children}
-      </BaseToggle>
+        {(state) => (
+          <>
+            {icon != null && <ButtonIcon>{icon}</ButtonIcon>}
+            {typeof children === "function" ? children(state) : children}
+          </>
+        )}
+      </SdkToggle>
     </ButtonSizeContext>
   );
 }

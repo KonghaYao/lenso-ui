@@ -53,11 +53,29 @@ function readFromSource(filter: SVGElement, source: string) {
 export function splitFilter(filter: SVGElement, source: string): SplitFilter | undefined {
   const primitives = [...filter.children].filter((node) => node.namespaceURI === SVG);
   if (primitives.length !== filter.children.length) return;
-  const at = primitives.findIndex((node) => node.getAttribute("result") === source);
+  let at = primitives.findIndex((node) => node.getAttribute("result") === source);
   if (at < 0) return;
-  const head = primitives.slice(0, at + 1);
-  const tail = primitives.slice(at + 1);
-  if (readsOnlySource(head, tail, source) < 2) return;
+  let head: Element[], tail: Element[];
+  for (;;) {
+    head = primitives.slice(0, at + 1);
+    tail = primitives.slice(at + 1);
+    if (readsOnlySource(head, tail, source) >= 2) break;
+    // Current dark materials normalize coverage before the tone graph branches.
+    // Materialize that single-input wrapper with the optics rather than leaving
+    // every tone reader to recompute it and the entire refraction head.
+    const wrapper = primitives[at + 1];
+    const references = wrapper ? inputs(wrapper) : [];
+    const result = wrapper?.getAttribute("result");
+    if (
+      references.length !== 1 ||
+      references[0] !== source ||
+      !result ||
+      head.some((node) => node.getAttribute("result") === result)
+    )
+      return;
+    source = result;
+    at++;
+  }
   const optics = stage(filter, `${filter.id}-optics`, head);
   const material = stage(filter, `${filter.id}-material`, tail);
   optics.setAttribute(OPTICS_OF, filter.id);

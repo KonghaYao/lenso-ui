@@ -1,6 +1,6 @@
 "use client";
 
-import { ToggleGroup as BaseToggleGroup } from "@base-ui/react/toggle-group";
+import { ToggleGroup as SdkToggleGroup } from "@ui-sdk/react/toggle";
 import { createContext, useContext, type ComponentProps } from "react";
 import { toggleButtonGroupStyles } from "@lenso/tokens/toggle-button-group";
 import { mergeStyle, type StyleXProps } from "../../utils/styled.js";
@@ -8,6 +8,8 @@ import type * as React from "react";
 import * as stylex from "@stylexjs/stylex";
 import type { ButtonSize, ButtonVariant } from "../button/button.js";
 import type { GlassButtonVariant } from "../glass-button/glass-button.js";
+import { GlassContainer } from "../glass-container/glass-container.js";
+import { renderElement } from "@ui-sdk/react/primitive";
 type GroupOptions = {
   disabled?: boolean;
   size?: ButtonSize;
@@ -22,19 +24,19 @@ function Separator({
   xstyle,
   style,
   ...props
-}: StyleXProps<React.ComponentPropsWithRef<"span">> & { "data-slot"?: unknown }) {
+}: StyleXProps<React.ComponentPropsWithRef<"span">> & { "data-lenso-slot"?: unknown }) {
   const compiled = stylex.props(toggleButtonGroupStyles.separator, xstyle);
   return (
     <span
       {...props}
       {...compiled}
       style={mergeStyle(compiled.style, style)}
-      data-slot={props["data-slot"] ?? "toggle-button-group-separator"}
+      data-lenso-slot={props["data-lenso-slot"] ?? "toggle-button-group-separator"}
     />
   );
 }
-export type ToggleButtonGroupRootProps = StyleXProps<ComponentProps<typeof BaseToggleGroup>> &
-  GroupOptions & { "data-slot"?: unknown };
+export type ToggleButtonGroupRootProps = StyleXProps<ComponentProps<typeof SdkToggleGroup>> &
+  GroupOptions & { "data-lenso-slot"?: unknown };
 export function ToggleButtonGroupRoot({
   children,
   disabled = false,
@@ -57,16 +59,30 @@ export function ToggleButtonGroupRoot({
     xstyle,
   );
   return (
-    <BaseToggleGroup
+    <SdkToggleGroup
       {...props}
       {...compiled}
       style={mergeStyle(compiled.style, style)}
-      data-slot={props["data-slot"] ?? "toggle-button-group"}
+      data-lenso-slot={props["data-lenso-slot"] ?? "toggle-button-group"}
+      render={(partProps, state) => (
+        <GlassContainer
+          {...partProps}
+          render={(containerProps) => renderElement("div", containerProps, props.render, state)}
+          disabled={isDetached}
+          spacing={18}
+          data-lenso-slot={props["data-lenso-slot"] ?? "toggle-button-group"}
+          data-lenso-glass-group={isDetached ? undefined : ""}
+        />
+      )}
       orientation={orientation}
       disabled={disabled}
     >
-      <ToggleButtonGroupContext value={options}>{children}</ToggleButtonGroupContext>
-    </BaseToggleGroup>
+      {(state) => (
+        <ToggleButtonGroupContext value={options}>
+          {typeof children === "function" ? children(state) : children}
+        </ToggleButtonGroupContext>
+      )}
+    </SdkToggleGroup>
   );
 }
 export function ToggleButtonGroupSeparator({ xstyle, ...props }: ComponentProps<typeof Separator>) {

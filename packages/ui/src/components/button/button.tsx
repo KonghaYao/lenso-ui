@@ -1,7 +1,7 @@
 "use client";
 
-import { Button as BaseButton } from "@base-ui/react/button";
-import { mergeProps } from "@base-ui/react/merge-props";
+import { Button as SdkButton } from "@ui-sdk/react/button";
+import { mergeProps } from "@ui-sdk/react/primitive";
 import {
   cloneElement,
   createContext,
@@ -23,11 +23,12 @@ import * as stylex from "@stylexjs/stylex";
 import { ButtonGroupContext } from "../button-group/button-group.js";
 import { buttonGroupItemStyles } from "@lenso/tokens/button-group";
 import { guardLoadingActivation, protectLoadingRender } from "../../utils/action-button.js";
+import { slotRender } from "../../utils/sdk-render.js";
 
 export type ButtonSize = "sm" | "md" | "lg";
 export type ButtonVariant = "prominent" | "bordered" | "borderless";
-export type ButtonRootProps = StyleXProps<ComponentProps<typeof BaseButton>> & {
-  "data-slot"?: unknown;
+export type ButtonRootProps = StyleXProps<ComponentProps<typeof SdkButton>> & {
+  "data-lenso-slot"?: unknown;
   size?: ButtonSize;
   variant?: ButtonVariant;
   isIconOnly?: boolean;
@@ -43,7 +44,7 @@ function Icon({
   xstyle,
   style,
   ...props
-}: StyleXProps<React.ComponentPropsWithRef<"span">> & { "data-slot"?: unknown }) {
+}: StyleXProps<React.ComponentPropsWithRef<"span">> & { "data-lenso-slot"?: unknown }) {
   const legacy = useContext(LegacyButtonIconContext);
   const size = useContext(ButtonSizeContext);
   const compiled = stylex.props(
@@ -55,7 +56,7 @@ function Icon({
     <span
       {...mergeProps(compiled, props)}
       style={mergeStyle(compiled.style, style)}
-      data-slot={props["data-slot"] ?? "button-icon"}
+      data-lenso-slot={props["data-lenso-slot"] ?? "button-icon"}
     />
   );
 }
@@ -72,7 +73,7 @@ export function ButtonRoot({
   isLoading = false,
   xstyle,
   style,
-  "data-slot": dataSlot,
+  "data-lenso-slot": dataSlot,
   render,
   onClickCapture,
   onDoubleClickCapture,
@@ -124,11 +125,11 @@ export function ButtonRoot({
   );
   return (
     <ButtonSizeContext value={size}>
-      <BaseButton
+      <SdkButton
         {...mergeProps(compiled, props)}
         ref={ref}
         style={mergeStyle(compiled.style, style)}
-        data-slot={dataSlot ?? "button"}
+        data-lenso-slot={dataSlot ?? "button"}
         data-glass="false"
         data-lenso-group-item={group.orientation ? "" : undefined}
         data-variant={variant}
@@ -136,7 +137,7 @@ export function ButtonRoot({
         data-tint={tint ? "" : undefined}
         data-icon={isIconOnly ? "only" : icon != null ? "" : undefined}
         disabled={Boolean(ownDisabled || group.disabled)}
-        render={protectedRender}
+        render={slotRender("button", dataSlot ?? "button", protectedRender)}
         aria-busy={isLoading || undefined}
         data-pending={isLoading || undefined}
         onClickCapture={isLoading ? guardLoadingActivation(onClickCapture) : onClickCapture}
@@ -154,9 +155,13 @@ export function ButtonRoot({
           isLoading ? guardLoadingActivation(onPointerUpCapture) : onPointerUpCapture
         }
       >
-        {icon != null && <ButtonIcon>{icon}</ButtonIcon>}
-        {children}
-      </BaseButton>
+        {(state) => (
+          <>
+            {icon != null && <ButtonIcon>{icon}</ButtonIcon>}
+            {typeof children === "function" ? children(state) : children}
+          </>
+        )}
+      </SdkButton>
     </ButtonSizeContext>
   );
 }

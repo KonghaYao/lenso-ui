@@ -1,10 +1,12 @@
 "use client";
 // modified for native HTML and StyleX.
-import { Separator as Primitive } from "@base-ui/react/separator";
+import { Separator as Primitive, type SeparatorState } from "@ui-sdk/react/separator";
+import type { ComponentProps } from "react";
+import { slotRender } from "../../utils/sdk-render.js";
 import { separatorStyles, separatorVariants } from "@lenso/tokens/separator";
 import * as stylex from "@stylexjs/stylex";
 import { mergeStyle, type StyleXProps } from "../../utils/styled.js";
-export type SeparatorRootProps = StyleXProps<Primitive.Props> & {
+export type SeparatorRootProps = StyleXProps<ComponentProps<typeof Primitive>> & {
   variant?: keyof typeof separatorVariants;
 };
 export function SeparatorRoot({
@@ -24,9 +26,10 @@ export function SeparatorRoot({
     <Primitive
       orientation={orientation}
       {...props}
-      data-slot={(props as { "data-slot"?: string })["data-slot"] ?? "separator"}
+      data-lenso-slot={(props as { "data-lenso-slot"?: string })["data-lenso-slot"] ?? "separator"}
       {...compiled}
-      style={mergeStyle<Primitive.State>(compiled.style, style)}
+      render={slotRender("div", props["data-lenso-slot"] ?? "separator", props.render)}
+      style={mergeStyle<SeparatorState>(compiled.style, style)}
     />
   );
 }

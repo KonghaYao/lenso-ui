@@ -1,5 +1,6 @@
 import { afterEach, expect, test } from "bun:test";
 import { lensFilter, splitFilter } from "../../src/filter-split.js";
+import { appendMaterialTone } from "../../src/material-tone-svg.js";
 
 const SVG = "http://www.w3.org/2000/svg";
 
@@ -70,6 +71,36 @@ test("resolves either stage back to the complete optical graph", () => {
   expect(lensFilter(split.value)).toBe(filter);
   expect(lensFilter('url("#lens")')).toBe(filter);
   expect(lensFilter("saturate(1)")).toBeNull();
+});
+
+test("dark material split preserves original coverage after the RGB transfer", () => {
+  const filter = lens([]);
+  appendMaterialTone(filter, "face", { mode: "dark", size: 1, clarity: 0 });
+  const original = filter.innerHTML;
+  const split = splitFilter(filter, "face")!;
+  expect(split).toBeDefined();
+  // Upstream now restores input alpha after normalizing the RGB transfer.
+  // Moving the opaque wrapper into optics would lose that original coverage.
+  expect(split.nodes[0]!.lastElementChild!.getAttribute("result")).toBe("face");
+  const opaque = split.nodes[1]!.querySelector('[result="tone-input"]')!;
+  expect(opaque.getAttribute("in")).toBe("SourceGraphic");
+  expect(opaque.querySelector("feFuncA")?.getAttribute("intercept")).toBe("1");
+  const coverage = split.nodes[1]!.lastElementChild!;
+  expect(coverage.getAttribute("operator")).toBe("in");
+  expect(coverage.getAttribute("in2")).toBe("SourceGraphic");
+  const readers = [...split.nodes[1]!.children].flatMap((node) => [
+    node.getAttribute("in"),
+    node.getAttribute("in2"),
+  ]);
+  expect(readers).not.toContain("face");
+  expect(readers.filter((input) => input === "SourceGraphic")).toHaveLength(2);
+  expect(filter.innerHTML).toBe(original);
+});
+
+test("retains the current linear light tone as one filter", () => {
+  const filter = lens([]);
+  appendMaterialTone(filter, "face", { mode: "light", size: 1, clarity: 0 });
+  expect(splitFilter(filter, "face")).toBeUndefined();
 });
 
 test.each([

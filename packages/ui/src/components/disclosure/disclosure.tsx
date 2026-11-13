@@ -1,6 +1,7 @@
 "use client";
 
-import { Collapsible as BaseCollapsible } from "@base-ui/react/collapsible";
+import * as SdkCollapsible from "@ui-sdk/react/collapsible";
+import { slotRender } from "../../utils/sdk-render.js";
 import { type ComponentProps } from "react";
 import { disclosureStyles } from "@lenso/tokens/disclosure";
 import { mergeStyle, type StyleXProps } from "../../utils/styled.js";
@@ -11,17 +12,18 @@ function Root({
   style,
   ...props
 }: StyleXProps<
-  Omit<BaseCollapsible.Root.Props, "ref"> & {
-    ref?: React.ComponentPropsWithRef<typeof BaseCollapsible.Root>["ref"];
+  Omit<React.ComponentProps<typeof SdkCollapsible.Collapsible>, "ref"> & {
+    ref?: React.ComponentPropsWithRef<typeof SdkCollapsible.Collapsible>["ref"];
   }
-> & { "data-slot"?: unknown }) {
+> & { "data-lenso-slot"?: unknown }) {
   const compiled = stylex.props(disclosureStyles.root, xstyle);
   return (
-    <BaseCollapsible.Root
+    <SdkCollapsible.Collapsible
       {...props}
       {...compiled}
       style={mergeStyle(compiled.style, style)}
-      data-slot={props["data-slot"] ?? "disclosure"}
+      data-lenso-slot={props["data-lenso-slot"] ?? "disclosure"}
+      render={slotRender("div", props["data-lenso-slot"] ?? "disclosure", props.render)}
     />
   );
 }
@@ -30,17 +32,18 @@ function Trigger({
   style,
   ...props
 }: StyleXProps<
-  Omit<BaseCollapsible.Trigger.Props, "ref"> & {
-    ref?: React.ComponentPropsWithRef<typeof BaseCollapsible.Trigger>["ref"];
+  Omit<React.ComponentProps<typeof SdkCollapsible.CollapsibleTrigger>, "ref"> & {
+    ref?: React.ComponentPropsWithRef<typeof SdkCollapsible.CollapsibleTrigger>["ref"];
   }
-> & { "data-slot"?: unknown }) {
+> & { "data-lenso-slot"?: unknown }) {
   const compiled = stylex.props(disclosureStyles.trigger, xstyle);
   return (
-    <BaseCollapsible.Trigger
+    <SdkCollapsible.CollapsibleTrigger
       {...props}
       {...compiled}
       style={mergeStyle(compiled.style, style)}
-      data-slot={props["data-slot"] ?? "disclosure-trigger"}
+      data-lenso-slot={props["data-lenso-slot"] ?? "disclosure-trigger"}
+      render={slotRender("button", props["data-lenso-slot"] ?? "disclosure-trigger", props.render)}
     />
   );
 }
@@ -49,17 +52,18 @@ function Content({
   style,
   ...props
 }: StyleXProps<
-  Omit<BaseCollapsible.Panel.Props, "ref"> & {
-    ref?: React.ComponentPropsWithRef<typeof BaseCollapsible.Panel>["ref"];
+  Omit<React.ComponentProps<typeof SdkCollapsible.CollapsiblePanel>, "ref"> & {
+    ref?: React.ComponentPropsWithRef<typeof SdkCollapsible.CollapsiblePanel>["ref"];
   }
-> & { "data-slot"?: unknown }) {
+> & { "data-lenso-slot"?: unknown }) {
   const compiled = stylex.props(disclosureStyles.content, xstyle);
   return (
-    <BaseCollapsible.Panel
+    <SdkCollapsible.CollapsiblePanel
       {...props}
       {...compiled}
       style={mergeStyle(compiled.style, style)}
-      data-slot={props["data-slot"] ?? "disclosure-content"}
+      data-lenso-slot={props["data-lenso-slot"] ?? "disclosure-content"}
+      render={slotRender("div", props["data-lenso-slot"] ?? "disclosure-content", props.render)}
     />
   );
 }
@@ -68,14 +72,14 @@ export function DisclosureHeading({
   xstyle,
   style,
   ...props
-}: StyleXProps<React.ComponentPropsWithRef<"h3">> & { "data-slot"?: unknown }) {
+}: StyleXProps<React.ComponentPropsWithRef<"h3">> & { "data-lenso-slot"?: unknown }) {
   const compiled = stylex.props(disclosureStyles.heading, xstyle);
   return (
     <h3
       {...props}
       {...compiled}
       style={mergeStyle(compiled.style, style)}
-      data-slot={props["data-slot"] ?? "disclosure-heading"}
+      data-lenso-slot={props["data-lenso-slot"] ?? "disclosure-heading"}
     >
       {children}
     </h3>
@@ -85,14 +89,14 @@ export function DisclosureBody({
   xstyle,
   style,
   ...props
-}: StyleXProps<React.ComponentPropsWithRef<"div">> & { "data-slot"?: unknown }) {
+}: StyleXProps<React.ComponentPropsWithRef<"div">> & { "data-lenso-slot"?: unknown }) {
   const compiled = stylex.props(disclosureStyles.body, xstyle);
   return (
     <div
       {...props}
       {...compiled}
       style={mergeStyle(compiled.style, style)}
-      data-slot={props["data-slot"] ?? "disclosure-body"}
+      data-lenso-slot={props["data-lenso-slot"] ?? "disclosure-body"}
     />
   );
 }
@@ -100,14 +104,14 @@ function Indicator({
   xstyle,
   style,
   ...props
-}: StyleXProps<React.ComponentPropsWithRef<"svg">> & { "data-slot"?: unknown }) {
+}: StyleXProps<React.ComponentPropsWithRef<"svg">> & { "data-lenso-slot"?: unknown }) {
   const compiled = stylex.props(disclosureStyles.indicator, xstyle);
   return (
     <svg
       {...props}
       {...compiled}
       style={mergeStyle(compiled.style, style)}
-      data-slot={props["data-slot"] ?? "disclosure-indicator"}
+      data-lenso-slot={props["data-lenso-slot"] ?? "disclosure-indicator"}
     />
   );
 }

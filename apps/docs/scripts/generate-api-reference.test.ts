@@ -89,11 +89,11 @@ test("API generation is independent of the caller's working directory", async ()
 }, 120000);
 
 // Archived RAC tables cannot prove the replacement button's native event and composition API.
-test("Button uses the actual Base UI props, callbacks, variants and defaults", () => {
+test("Button uses native UI SDK props, callbacks, variants and defaults", () => {
   const button = part("button", "ButtonRoot");
   const props = rows(button);
   assert.match(props.disabled.type, /boolean/);
-  assert.match(props.onClick.type, /MouseEvent<HTMLButtonElement/);
+  assert.match(props.onClick.type, /MouseEvent<HTMLElement/);
   assert.match(props.style.type, /\(state: ButtonState\)/);
   assert.match(props.render.type, /ButtonState/);
   for (const variant of ["prominent", "bordered", "borderless"])
@@ -118,8 +118,10 @@ test("DatePicker retains its generic date model and native supporting parts", ()
   assert.match(picker.signature, /<T extends DateValue = DateValue>/);
   const props = rows(picker);
   assert.match(props.value.type, /^T \| null/);
-  assert.match(props.onChange.type, /MappedDateValue<T>/);
-  assert.ok(props.isDisabled);
+  assert.match(props.onValueChange.type, /T \| null/);
+  assert.match(props.onValueChange.type, /ChangeDetails<ModelChangeReason>/);
+  assert.ok(props.disabled);
+  assert.ok(props.readOnly);
   assert.ok(rows(part("date-picker", "DatePickerTrigger")).onClick);
   assert.ok(rows(part("date-picker", "DatePickerTrigger")).render);
   assert.equal(rows(part("date-picker", "DatePickerTrigger")).onPress, undefined);

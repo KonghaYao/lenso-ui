@@ -1,6 +1,7 @@
 "use client";
-// modified for Base UI, native SVG and StyleX.
-import { Progress as Primitive } from "@base-ui/react/progress";
+// Modified: UI SDK behavior, native SVG and StyleX.
+import * as Primitive from "@ui-sdk/react/progress";
+import { slotRender } from "../../utils/sdk-render.js";
 import { createContext, useContext, type ComponentProps } from "react";
 import {
   progressCircleStyles,
@@ -16,7 +17,7 @@ const Context = createContext({
   percentage: 0,
   indeterminate: false,
 });
-export type ProgressCircleRootProps = StyleXProps<Primitive.Root.Props> & {
+export type ProgressCircleRootProps = StyleXProps<ComponentProps<typeof Primitive.Progress>> & {
   size?: keyof typeof progressCircleSizes;
   color?: keyof typeof progressCircleColors;
 };
@@ -33,12 +34,15 @@ export function ProgressCircleRoot({
     max > min ? Math.max(0, Math.min(100, (((props.value ?? min) - min) / (max - min)) * 100)) : 0;
   const compiled = stylex.props(progressCircleStyles.root, progressCircleColors[color], xstyle);
   return (
-    <Context.Provider value={{ size, percentage, indeterminate: props.value === null }}>
-      <Primitive.Root
+    <Context.Provider value={{ size, percentage, indeterminate: props.value == null }}>
+      <Primitive.Progress
         {...props}
-        data-slot={(props as { "data-slot"?: string })["data-slot"] ?? "progress-circle"}
+        data-lenso-slot={
+          (props as { "data-lenso-slot"?: string })["data-lenso-slot"] ?? "progress-circle"
+        }
+        render={slotRender("div", props["data-lenso-slot"] ?? "progress-circle", props.render)}
         {...compiled}
-        style={mergeStyle<Primitive.Root.State>(compiled.style, style)}
+        style={mergeStyle<Primitive.ProgressState>(compiled.style, style)}
       />
     </Context.Provider>
   );
@@ -61,7 +65,9 @@ export function ProgressCircleTrack({
       fill="none"
       aria-hidden="true"
       {...props}
-      data-slot={(props as { "data-slot"?: string })["data-slot"] ?? "progress-circle-track"}
+      data-lenso-slot={
+        (props as { "data-lenso-slot"?: string })["data-lenso-slot"] ?? "progress-circle-track"
+      }
       {...compiled}
       style={{ ...compiled.style, ...style }}
     />
@@ -80,7 +86,10 @@ export function ProgressCircleTrackCircle({
       r={RADIUS}
       strokeWidth={4}
       {...props}
-      data-slot={(props as { "data-slot"?: string })["data-slot"] ?? "progress-circle-track-circle"}
+      data-lenso-slot={
+        (props as { "data-lenso-slot"?: string })["data-lenso-slot"] ??
+        "progress-circle-track-circle"
+      }
       {...compiled}
       style={{ ...compiled.style, ...style }}
     />
@@ -108,7 +117,10 @@ export function ProgressCircleFillCircle({
       strokeLinecap="round"
       transform={`rotate(-90 ${cx} ${cy})`}
       {...props}
-      data-slot={(props as { "data-slot"?: string })["data-slot"] ?? "progress-circle-fill-circle"}
+      data-lenso-slot={
+        (props as { "data-lenso-slot"?: string })["data-lenso-slot"] ??
+        "progress-circle-fill-circle"
+      }
       {...compiled}
       style={{ ...compiled.style, ...style }}
     />
@@ -118,14 +130,15 @@ export function ProgressCircleLabel({
   xstyle,
   style,
   ...props
-}: StyleXProps<Primitive.Label.Props>) {
+}: StyleXProps<ComponentProps<typeof Primitive.ProgressLabel>>) {
   const compiled = stylex.props(xstyle);
   return (
-    <Primitive.Label
+    <Primitive.ProgressLabel
       {...props}
-      data-slot={(props as { "data-slot"?: string })["data-slot"] ?? "label"}
+      data-lenso-slot={(props as { "data-lenso-slot"?: string })["data-lenso-slot"] ?? "label"}
+      render={slotRender("span", props["data-lenso-slot"] ?? "label", props.render)}
       {...compiled}
-      style={mergeStyle<Primitive.Label.State>(compiled.style, style)}
+      style={mergeStyle<Primitive.ProgressState>(compiled.style, style)}
     />
   );
 }

@@ -1,8 +1,19 @@
 # @lenso/ui
 
-Components use Base UI and StyleX. Date, time and color
-families use native Base UI parts around pure internationalized value/state
-models, preserving their specialized functions.
+Components use StyleX and native UI SDK interaction contracts. Forms, selection,
+floating overlays and notifications import SDK parts directly. Date, time and
+color families retain their domain value models. Product-specific collection
+and gesture behavior remains in its owning components.
+
+Use `Content` for floating surfaces, native controllers for imperative actions,
+and `createToaster` with `Toast.Region` for notifications. Autocomplete edits
+free text; ComboBox selects options and supports multiple values. Former Base UI
+Portal/Positioner/Popup compositions and manager APIs are removed.
+
+Controls expose the SDK agent registry through `createAgent`, `agentTools` and
+`registerTools` from `@lenso/ui/agent`. Custom product behavior is not implicitly
+covered by the SDK registry. See [migration notes](../../docs/plans/ui-sdk-react-migration.md)
+for breaking contracts and the unpatched upstream strict declaration issue.
 
 Import themes and component styles once:
 
@@ -15,7 +26,7 @@ import { Button } from "@lenso/ui";
 </Button>;
 ```
 
-Components use native Base UI props such as `disabled`, `onClick` and `render`.
+Components retain native props such as `disabled`, `onClick` and `render`.
 Date/time/color parts compose native fields, inputs, number fields, sliders,
 radio groups, buttons and popovers. `xstyle` is a typed
 StyleX override; native runtime styles and state-dependent style callbacks
@@ -49,7 +60,7 @@ always wins, including `glass` or `filled` inside a group:
 ## Shared glass runtime
 
 Glass optics and common motion now come from `@lenso/glass`. Existing component
-imports and props are unchanged; UI retains Base UI interaction ownership and
+imports are unchanged; migrated controls use UI SDK interaction contracts and
 `@lenso/tokens` retains material recipes. See
 [`packages/glass/README.md`](../glass/README.md) for direct runtime use and browser
 limits. Local tarball consumers must include the new package; it is not yet

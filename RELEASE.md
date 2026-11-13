@@ -1,8 +1,13 @@
-# Prepared patch release: UI and Tokens 0.10.1
+# Prepared release: UI SDK migration 0.11.0
 
-This patch carries the current Glass performance fixes into consumer installs.
-Tokens and UI advance together; Docs and the initializer update their pinned
-dependencies. Primitives stays at its already-published 0.8.0 version.
+Publication is blocked by the strict SDK declaration issue recorded in
+[the upstream type report](docs/upstream-ui-sdk-types.md). Prepared versions are
+not a publication receipt.
+
+This release migrates React interactions to native UI SDK contracts while retaining
+Lenso's StyleX appearance and Glass presentation. It includes the subsequent
+material, menu, sheet, slider, wheel and popup placement corrections. These are
+breaking API changes for consumers of UI 0.10.x and primitives 0.8.x.
 
 This release uses the current official StyleX integration and component
 architecture. Consumers upgrading from UI/Tokens 0.9.2 must still migrate the
@@ -12,14 +17,14 @@ Publish in dependency order:
 
 | Package             | Version  | Scope                                                       |
 | ------------------- | -------- | ----------------------------------------------------------- |
-| `@lenso/tokens`     | `0.10.1` | Official StyleX declaration modules and current materials   |
-| `@lenso/glass`      | `0.1.1`  | WebKit native paint and stable Menu/Select material handoff |
-| `@lenso/primitives` | `0.8.0`  | Already published and unchanged; no new primitives release  |
-| `@lenso/ui`         | `0.10.1` | Current controls, Glass runtime and Command integration     |
-| `@lenso/docs`       | `0.2.1`  | Current documentation host and official StyleX integration  |
-| `create-lenso-docs` | `0.2.1`  | Template pinned to Docs 0.2.1                               |
+| `@lenso/tokens`     | `0.11.0` | Official StyleX declaration modules and current materials   |
+| `@lenso/glass`      | `0.2.0`  | WebKit native paint and stable Menu/Select material handoff |
+| `@lenso/primitives` | `0.9.0`  | Native SDK product primitives; removes redundant entries    |
+| `@lenso/ui`         | `0.11.0` | Native UI SDK contracts and restored Lenso presentation     |
+| `@lenso/docs`       | `0.3.0`  | Current documentation host and official StyleX integration  |
+| `create-lenso-docs` | `0.3.0`  | Template pinned to Docs 0.3.0                               |
 
-The Exact packages and experiment remain private and are not part of npm release.
+Retired Exact experiments are not part of this release.
 The removed `@lenso/stylex-build` package is not restored or republished.
 
 Upgrade UI and Tokens together. Configure the official StyleX Vite/Rolldown
@@ -31,20 +36,59 @@ StyleX scans. Existing projects using the retired integration require this
 migration before upgrading. The remaining component migrations below still
 apply when upgrading from the older registry packages.
 
-The new Command implementation is published as `@lenso/primitives/command`;
-existing DataGrid, ResizeHandle and Sidebar component source is unchanged.
-The Command distribution entry explicitly retains its client boundary for Next.
+Unstyled Command parts come directly from `@ui-sdk/react/command`.
+Use `@lenso/ui/command` for Lenso presentation. The redundant
+`@lenso/primitives/command` entry has been removed; migrate imports to the SDK's
+named parts (`Command`, `CommandInput`, `CommandList`, `CommandItem`, and so on).
+The unused DataGrid and ResizeHandle entries have also been removed. Sidebar, SectionIndex and SwipeActions expose native SDK parts from
+`@lenso/primitives`; List, model controls and WheelPicker expose core definitions. Existing Lenso Table components
+and the TanStack Table examples remain available.
+Sidebar behavior now uses SDK core primitives and a `createParts` React adapter.
+Import its framework-independent definition from `@lenso/primitives/sidebar/core`.
+Replace Group/Provider/targetId integrations with native layout and a
+`createSidebarController`; open callbacks now receive native change details.
+Use data-open/data-closed and data-selected/data-nested for state styling;
+navigation items render anchors.
 UI pins the new primitives version in addition to Glass and Tokens. Docs pins
 the matching UI, Glass and Tokens versions through the packed workspace manifests.
 
 Publication remains a manual `Release` dispatch on an exactly verified `main`
-commit, using input `0.10.1`, the protected `npm` environment, npm Trusted
+commit, using input `0.11.0`, the protected `npm` environment, npm Trusted
 Publishing and provenance. Check the publisher configuration for every package,
 including the new Glass package, before approving the environment. The workflow
 does not create Git tags or GitHub Releases. No npm publication is implied by
 the prepared versions or by pushing the source commits.
 
+The migration requires React 19.2 or newer. Replace former Base UI callbacks,
+state fields and wrapper parts with native SDK APIs; there is no compatibility
+layer or dependency patch. ContextMenu uses Root `compact` for its action bar and
+Content `preview`, `bar`, `layout`, `previewAlign` and `dim` for presentation.
+SDK `presentation` keeps its native popup/sheet meaning. See
+[upstream declaration notes](docs/upstream-ui-sdk-types.md) for SDK type limitations.
+
 # Unreleased: control and layout compatibility
+
+- SDK `data-slot` attributes remain SDK-owned. Lenso materials and selectors use
+  `data-lenso-slot`; migrate custom selectors that targeted Lenso presentation names.
+  Slider thumbs must be children of `Slider.Track`.
+- List selection uses `value`, `defaultValue` and `onValueChange(value, details)`
+  with key arrays. Replace `selectedKeys`, `defaultSelectedKeys` and
+  `onSelectionChange`; callbacks can refuse changes with `details.cancel()`.
+- SectionIndex, SwipeActions and WheelPicker expose native change details and
+  controllers. Wheel changes distinguish scrolling, dragging and list navigation.
+- Date, time, calendar and color fields expose cancellable `onValueChange` and
+  serializable controllers/agent actions. Their callbacks retain date/time/color
+  value models. Form reset restores the initial domain value.
+- Picker disclosure uses native `open`, `defaultOpen` and cancellable
+  `onOpenChange`; remove `isOpen` and value-model open/close calls. Position
+  popovers with native `side` and `align` instead of `placement`.
+- Picker `Dialog` wrappers are removed. Put content directly in `Popover`, name
+  that native content with `aria-label` or `Title`, and use `Close` and
+  `PopoverDescription` for native popup operations and naming.
+- A composed ColorPicker owns channel values and change callbacks. Configure its
+  color `space` on the root; nested Area, Slider and Swatches use that owner.
+  Standalone controls create their own native ColorPicker. Swatch render state
+  uses the SDK's `selected` property.
 
 These are source changes; use the migration details for the version you consume.
 
@@ -262,7 +306,7 @@ current [consumer integration guide](apps/docs/content/lenso/en/react/getting-st
 
 Replace Dropdown imports and composition with the exported `Menu` parts.
 There is no Dropdown alias; an old documentation URL redirect does not restore
-the removed API. Check the current native Base UI props and generated
+the removed API. Check the current native UI SDK props and generated
 TypeScript declarations rather than mechanically renaming an upstream API.
 
 Theme configuration is additive. See the
@@ -332,7 +376,7 @@ import { Button } from "@lenso/ui";
 </Button>;
 ```
 
-Ordinary components use native Base UI props and composition, including
+Ordinary components use native UI SDK props and composition, including
 `disabled`, `onClick`, `render`, refs and state-style callbacks. Replace former
 wrapper APIs such as `isDisabled`, `onPress` and `asChild` where the new native
 contract requires it. Date, time and color components retain their specialized
@@ -342,7 +386,7 @@ Use StyleX `xstyle` for component overrides and keep the consumer's StyleX
 compiler settings compatible with the precompiled package: `dev: false`,
 no CSS layers, and preserved native `:dir()` selectors. Former registry
 recipes, token generators and styled component aliases are not compatibility
-exports. Preserved headless data-grid/sidebar behavior remains available from
+exports. Headless Sidebar behavior remains available from
 `@lenso/primitives`; it does not restore the retired styled UI.
 
 ## Deferred work
@@ -361,3 +405,16 @@ The manual `Release` workflow reuses `.github/workflows/release.yml` and the
 versions and tarballs, publishes tokens before UI with provenance, then verifies
 registry integrity and `latest` tags. No npm token is stored in the repository,
 and this workflow never publishes primitives.
+
+## Docs host migration
+
+Standalone Lenso Docs now uses Vite / TanStack Start, matching the product docs.
+Remove `--turbopack` from development scripts. A custom `build` module now exports
+Vite configuration rather than NextConfig; remove old Next/Babel/PostCSS host
+configuration. Presentation factories and MDX components execute during SSR and
+in the browser; move filesystem work into source adapters. Authored content,
+basic configuration, shared UI and static `out/` deployment remain supported.
+
+Before publication, `bun run docs:create <directory>` creates an independent site
+with packed local dependencies. See `packages/docs/README.md` for setup and
+migration details. This workflow does not publish packages.

@@ -6,7 +6,7 @@
 
 React components with an Apple-inspired point of view. Lenso UI brings familiar
 controls, purposeful glass materials and light and dark themes to the Web,
-built with **StyleX** and **Base UI**.
+built with **StyleX** and **UI SDK**.
 
 [Documentation](https://ui.lenso.dev/en/docs/react/getting-started) ·
 [Components](https://ui.lenso.dev/en/docs/react/components) ·
@@ -14,7 +14,7 @@ built with **StyleX** and **Base UI**.
 
 ## Built around the details
 
-- **Familiar interaction.** Buttons, fields, menus and navigation compose Base UI
+- **Familiar interaction.** Buttons, fields, menus and navigation compose UI SDK
   contracts for keyboard input, focus and dismissal. Date, time and color controls
   pair native controls with their specialized value models.
 - **Materials with a purpose.** Glass gives floating controls and navigation a
@@ -117,3 +117,9 @@ describes the release process and current scope.
 Original Lenso work and preserved primitives retain their [MIT terms](LICENSE).
 Adapted components retain their applicable licenses. See
 [third-party notices](THIRD_PARTY_NOTICES.md) for attribution and license texts.
+
+## Archived experiments
+
+The Exact UI, primitives and documentation experiments were retired on
+2026-11-13. Their implementation checkpoint, research and recovery instructions
+are preserved in [the Exact archive](docs/archive/exact/README.md).

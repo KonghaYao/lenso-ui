@@ -45,11 +45,11 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const registry = "https://registry.npmjs.org/";
 export const packages: ReleasePackage[] = [
   { dir: "packages/tokens", name: "@lenso/tokens", kind: "tokens" },
-  { dir: "packages/glass", name: "@lenso/glass", kind: "glass", version: "0.1.1" },
-  { dir: "packages/primitives", name: "@lenso/primitives", kind: "primitives", version: "0.8.0" },
+  { dir: "packages/glass", name: "@lenso/glass", kind: "glass", version: "0.2.0" },
+  { dir: "packages/primitives", name: "@lenso/primitives", kind: "primitives", version: "0.9.0" },
   { dir: "packages/ui", name: "@lenso/ui", kind: "ui" },
-  { dir: "packages/docs", name: "@lenso/docs", kind: "docs", version: "0.2.1" },
-  { dir: "packages/create-docs", name: "create-lenso-docs", kind: "initializer", version: "0.2.1" },
+  { dir: "packages/docs", name: "@lenso/docs", kind: "docs", version: "0.3.0" },
+  { dir: "packages/create-docs", name: "create-lenso-docs", kind: "initializer", version: "0.3.0" },
 ];
 
 export function validateContext(
@@ -157,12 +157,14 @@ export function validatePackage(
         throw new Error(`@lenso/glass must include the attributed source ${file}`);
   } else if (item.kind === "primitives") {
     requireFile("package/LICENSE");
-    for (const family of ["command", "data-grid", "resize-handle", "sidebar"]) {
+    requireFile("package/dist/sidebar/sidebar.js");
+    requireFile("package/dist/sidebar/sidebar.d.ts");
+    for (const family of ["sidebar"]) {
       requireFile(`package/dist/${family}/index.js`);
       requireFile(`package/dist/${family}/index.d.ts`);
+      if (!/^["']use client["'];/.test(contents[`package/dist/${family}/index.js`] ?? ""))
+        throw new Error(`${family} entry must preserve its use client directive`);
     }
-    if (!/^["']use client["'];/.test(contents["package/dist/command/index.js"] ?? ""))
-      throw new Error("Command entry must preserve its use client directive");
   } else if (item.kind === "docs") {
     for (const path of [
       "package/LICENSE",
@@ -321,7 +323,7 @@ async function publish() {
           "package/dist/tokens.stylex.const.js",
           "package/dist/THIRD_PARTY_NOTICES.md",
           "package/dist/react/index.js",
-          "package/dist/command/index.js",
+          ...["sidebar"].map((family) => `package/dist/${family}/index.js`),
           "package/dist/source/src/gpu-blur.ts",
           "package/dist/source/src/gpu-optics.ts",
         ]
