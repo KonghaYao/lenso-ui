@@ -2,18 +2,18 @@
 
 import * as stylex from "@stylexjs/stylex";
 
-import { useSearchContext } from "fumadocs-ui/contexts/search";
 import { TabBar } from "@lenso/ui/tab-bar";
 import Link from "fumadocs-core/link";
 import {
   DocumentationCompactSearchTrigger,
+  DocumentationLanguageToggle,
+  useDocumentationSearchTrigger,
   type DocumentationSiteLayoutProps,
 } from "@lenso/docs/client";
 import { Globe, LogoGithub, Magnifier } from "@gravity-ui/icons";
 import { GlassButton } from "@lenso/ui";
 import type { Locale } from "@/lib/source";
 import { headerControls as s } from "@/styles/header-controls.stylex";
-import { LanguageToggle } from "./fumadocs/ui/language-toggle";
 import { SearchDialog } from "./fumadocs/ui/search-dialog";
 import { ThemeToggle } from "./fumadocs/ui/theme-toggle";
 import { DocsThemePicker } from "./docs-theme-picker";
@@ -24,16 +24,16 @@ export function SiteSearch({ locale }: { locale: Locale }) {
 
 export function DesktopActions({
   locale,
-  slug,
+  alternates,
   repository,
 }: {
   locale: Locale;
-  slug: string;
+  alternates: Parameters<typeof DocumentationLanguageToggle>[0]["alternates"];
   repository: string;
 }) {
   return (
     <>
-      <LanguageToggle locale={locale} slug={slug} />
+      <DocumentationLanguageToggle locale={locale} alternates={alternates} />
       <AppearanceControls locale={locale} />
       <RepositoryControl repository={repository} />
     </>
@@ -69,19 +69,14 @@ export function MobileActions({ locale }: { locale: Locale }) {
   return <DocsThemePicker locale={locale} />;
 }
 
-export function DrawerActions({ locale, slug }: { locale: Locale; slug: string }) {
+export function DrawerActions({
+  locale,
+  alternates,
+}: Parameters<typeof DocumentationLanguageToggle>[0]) {
   return (
     <>
-      <LanguageToggle locale={locale} slug={slug} />
+      <DocumentationLanguageToggle locale={locale} alternates={alternates} />
       <ThemeToggle />
-    </>
-  );
-}
-
-export function WebSectionLabel() {
-  return (
-    <>
-      <Globe width={14} height={14} aria-hidden="true" /> Web
     </>
   );
 }
@@ -111,7 +106,7 @@ export function MobileNavigation({
   sections: DocumentationSiteLayoutProps["sections"];
   activeSection?: string;
 }) {
-  const { setOpenSearch } = useSearchContext();
+  const searchTrigger = useDocumentationSearchTrigger();
   const searchLabel = locale === "cn" ? "搜索文档" : "Search documentation";
   return (
     <TabBar
@@ -136,11 +131,11 @@ export function MobileNavigation({
       </TabBar.Group>
       <TabBar.Group separate>
         <TabBar.Button
+          {...searchTrigger}
           icon={<Magnifier aria-hidden="true" />}
           aria-label={searchLabel}
           aria-keyshortcuts="Meta+K Control+K"
           data-docs-search-trigger=""
-          onClick={() => setOpenSearch(true)}
         >
           {searchLabel}
         </TabBar.Button>

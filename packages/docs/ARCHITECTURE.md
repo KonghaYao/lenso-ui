@@ -10,6 +10,16 @@ package-owned; product adapters re-export that implementation. Product content g
 component/API extraction, custom routes and product-specific controls remain in
 `apps/docs`; an ordinary site authors content and `docs.config.ts` only.
 
+Generated hosts and the product site use TanStack Redact's full runtime through
+its Vite plugin, after the React plugin. React imports and peer versions stay
+unchanged. SSR dependencies are bundled so server rendering and browser hydration
+use the same runtime. Rendering is synchronous, without React time slicing.
+Embedded consumers of the React entries retain ownership of their runtime.
+
+Search stays deferred during ordinary reading. Pointer intent, keyboard focus
+or the search shortcut prepares the closed dialog and its locale/revision-specific
+static database in parallel. The visible dialog reuses Fumadocs' URL-keyed cache.
+
 `docs`, `component` and `api` are document kinds, not separate routers. They share
 identity, locale, title, headings, navigation, Markdown source and reading layout.
 Component and API blocks compose within that layout. TypeScript/OpenAPI ingestion
@@ -33,6 +43,18 @@ module, with `getDocument`. It does not emit an unused MDX body.
 navigation. Locale and slug remain separate identity keys. `translationKey`
 connects translated pages whose localized slugs differ. Custom `metadata` is JSON,
 not executable frontmatter.
+
+`DocumentationI18nProvider` owns the active locale and supplies the same language
+to Fumadocs, Lenso controls and framework messages. Generated roots install it;
+embedded hosts, including the product documentation, consume the public provider.
+Locale `language` selects English/Chinese messages, not the route code. Search
+labels, navigation, pagination, page actions and appearance controls share that
+selection. Content and search indexes remain source-owned per locale.
+
+The shared language menu renders actual source alternates as navigation links,
+including translated slugs and deployment prefixes. It does not invent missing
+translations or rewrite the current URL. Generated pages include this menu in
+desktop and drawer actions; embedded hosts pass their source alternates explicitly.
 
 ## Generated Vite host
 

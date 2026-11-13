@@ -1,6 +1,6 @@
 {
   "name": "@lenso/docs",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Content-first static documentation with MDX and the Lenso documentation shell.",
   "license": "MIT",
   "repository": {
@@ -73,7 +73,7 @@
   "scripts": {
     "build": "bun ./node_modules/tsdown/dist/run.mjs --config tsdown.config.ts --concurrency 1 && bun ./node_modules/typescript/bin/tsc -p tsconfig.presentation.json && bun scripts/copy-assets.ts && bun ./node_modules/typescript/bin/tsc -p tsconfig.framework.json && bun build src/source.ts --target=bun --outfile dist/source/source.js && bun ./node_modules/typescript/bin/tsc -p tsconfig.source.json && bun build src/runtime.ts --target=bun --external '*' --outfile /dev/null",
     "build:dev": "bun ./node_modules/tsdown/dist/run.mjs --config tsdown.config.ts --concurrency 1 && bun scripts/copy-assets.ts --development && bun build src/source.ts --target=bun --outfile dist/source/source.js && bun ./node_modules/typescript/bin/tsc -p tsconfig.source.json && bun build src/runtime.ts --target=bun --external '*' --outfile /dev/null",
-    "test": "bun test --preload ../../tests/setup/stylex.ts --timeout 30000 test/*.test.ts",
+    "test": "bun test --preload ../../tests/setup/stylex.ts --timeout 30000 test/*.test.{ts,tsx}",
     "typecheck": "bun check --no-script --noEmit && bun check --no-script -p tsconfig.test.json --noEmit",
     "lint": "bun --bun oxlint --deny-warnings src test",
     "dev": "bun ./node_modules/tsdown/dist/run.mjs --config tsdown.config.ts --watch --no-clean --concurrency 1"
@@ -92,6 +92,7 @@
     "@stylexjs/unplugin": "catalog:",
     "@tanstack/react-router": "1.170.46",
     "@tanstack/react-start": "1.169.5",
+    "@tanstack/redact": "0.3.1",
     "@types/culori": "4.0.1",
     "@types/mdx": "catalog:",
     "@types/node": "catalog:",

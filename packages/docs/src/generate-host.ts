@@ -81,6 +81,7 @@ export async function generateHost(
     `import { defineConfig, mergeConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import { redact } from "@tanstack/redact/vite";
 import stylex from "@stylexjs/unplugin/vite";
 ${build ? `import consumer from ${importPath(viteConfig, build)};` : "const consumer = {};"}
 export default defineConfig(async (environment) => {
@@ -97,7 +98,7 @@ export default defineConfig(async (environment) => {
       include: ["react", "react-dom/client", "react/jsx-runtime", "react/jsx-dev-runtime", "@stylexjs/stylex", "@gravity-ui/icons", "culori", "@fuma-translate/react", "@lenso/ui > react-stately", "fumadocs-ui > next-themes",
         "fumadocs-ui/provider/tanstack", "fumadocs-ui/provider/base", "fumadocs-ui/contexts/search", "fumadocs-ui/contexts/i18n", "fumadocs-ui/contexts/tree", "fumadocs-ui/layouts/notebook/page", "fumadocs-ui/components/steps", "fumadocs-ui/utils/use-footer-items", "fumadocs-ui/components/toc", "fumadocs-ui/components/ui/collapsible", "fumadocs-ui/mdx", "fumadocs-core/framework", "fumadocs-core/framework/tanstack", "fumadocs-core/link", "fumadocs-core/toc", "fumadocs-core/search/client"],
     },
-    ssr: { noExternal: [/^@lenso\\//, /^@ui-sdk\\//, "fumadocs-core", "fumadocs-ui"] },
+    ssr: { noExternal: true },
     build: { target: "es2022" },
     environments: { client: { build: { outDir: "out" } } },
     plugins: [
@@ -108,6 +109,7 @@ export default defineConfig(async (environment) => {
       }),
       stylex({ dev: environment.command === "serve", runtimeInjection: false, useCSSLayers: false, unstable_moduleResolution: { type: "commonJS" } }),
       react(),
+      redact(),
     ],
   });
 });
@@ -184,23 +186,34 @@ export default defineConfig(async (environment) => {
       ...page
     }) => page,
   );
-  const alternates = Object.fromEntries(
+  const languageAlternates = Object.fromEntries(
     host.pages.map((page) => [
       page.id,
-      Object.fromEntries(
-        host.source.getAlternates(page).map((locale) => [locale.language, locale.url]),
-      ),
+      host.source.getAlternates(page).map(({ code, label, language, url }) => ({
+        code,
+        label,
+        language,
+        url,
+      })),
+    ]),
+  );
+  const alternates = Object.fromEntries(
+    Object.entries(languageAlternates).map(([id, items]) => [
+      id,
+      Object.fromEntries(items.map(({ language, url }) => [language, url])),
     ]),
   );
   await write(
     path.join(directory, "model.ts"),
     `import type { ResolvedDocsConfig } from "@lenso/docs";
 import type { DocumentationPageMetadata } from "@lenso/docs/source";
+import type { DocumentationLocale } from "@lenso/docs/react";
 import type { Root } from "fumadocs-core/page-tree";
 export const config: ResolvedDocsConfig = ${json(config)};
 export const pages: (DocumentationPageMetadata & { id: string; headings?: { title: string; id: string; depth: number }[] } & Record<string, unknown>)[] = ${json(pages)};
 export const trees: Record<string, Root> = ${json(trees)};
 export const alternates: Record<string, Record<string, string>> = ${json(alternates)};
+export const languageAlternates: Record<string, (DocumentationLocale & { url: string })[]> = ${json(languageAlternates)};
 export const searchRevision = ${json(host.searchRevision ?? "")};
 `,
   );
@@ -208,7 +221,7 @@ export const searchRevision = ${json(host.searchRevision ?? "")};
   const render = path.join(directory, "render.tsx");
   await write(
     render,
-    `import { config, pages, trees, searchRevision } from "./model.ts";
+    `import { config, pages, trees, searchRevision, languageAlternates } from "./model.ts";
 import React from "react";
 import { ${hasBodies ? "DocumentationPage" : "DocumentationPageLayout as DocumentationPage"} } from ${importPath(render, development ? path.join(source, hasBodies ? "view.tsx" : "page-layout.tsx") : path.join(source, "../dist/framework", hasBodies ? "view.js" : "page-layout.js"))};
 ${customizationImport(render, customization)}
@@ -227,7 +240,7 @@ export async function renderPage(id: string, markdown: string, documentModule: o
   const document = await getDocument?.(context);
   if (!document && !Body) throw new Error('Documentation page "' + id + '" requires getDocument or a compiled Body.');
   return <DocumentationPage config={config} page={page as PageProps["page"]} tree={trees[page.locale]!}
-    Body={Body} customComponents={customComponents} siteSlots={siteSlots}
+    Body={Body} customComponents={customComponents} siteSlots={siteSlots} alternates={languageAlternates[page.id]}
     siteOptions={siteOptions} pageOptions={pageOptions} document={document} searchRevision={searchRevision} />;
 }
 `,
@@ -243,6 +256,7 @@ export async function renderPage(id: string, markdown: string, documentModule: o
 import { createRootRoute, HeadContent, Outlet, Scripts, Link, useRouterState } from "@tanstack/react-router";
 import { RootProvider } from "fumadocs-ui/provider/tanstack";
 import { DocumentationRoot } from ${importPath(rootFile, development ? path.join(source, "root.tsx") : path.join(source, "../dist/framework/root.js"))};
+import { getDocumentationMessages } from ${importPath(rootFile, development ? path.join(source, "language.ts") : path.join(source, "../dist/framework/language.js"))};
 import type { DocumentationRootOptions } from "@lenso/docs/react";
 import { config } from "../../model.ts";
 import fumaCSS from "fumadocs-ui/style.css?url";
@@ -269,12 +283,17 @@ export const Route = createRootRoute({
   component: Root,
   notFoundComponent: NotFound,
 });
-export function NotFound() { return <main id="main-content" className="lenso-not-found"><h1>Page not found</h1><p>This page does not exist.</p><Link to="/">Back to {config.title}</Link></main>; }
+export function NotFound() {
+  const pathname = useRouterState({ select: state => state.location.pathname });
+  const locale = getLocale(pathname);
+  const messages = getDocumentationMessages(locale.language);
+  return <main id="main-content" className="lenso-not-found"><h1>{messages.notFound}</h1><p>{messages.notFoundDescription}</p><Link to={locale.routePrefix || "/"}>{messages.backTo(config.title)}</Link></main>;
+}
 function getLocale(pathname: string) {
-  const localPath = pathname.slice(config.basePath?.length ?? 0) || "/";
+  // TanStack location and match paths already exclude the deployment prefix.
   return [...locales].sort((a, b) => b.routePrefix.length - a.routePrefix.length).find(locale => {
     const prefix = locale.routePrefix.replace(/\\/$/, "");
-    return !prefix || localPath === prefix || localPath.startsWith(prefix + "/");
+    return !prefix || pathname === prefix || pathname.startsWith(prefix + "/");
   }) ?? locales.find(locale => locale.code === ${json(host.defaultLocale)})!;
 }
 function Root() {
