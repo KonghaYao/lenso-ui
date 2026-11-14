@@ -28,6 +28,12 @@ UI SDK owns disclosure state, presence, native refs and keyboard behavior;
 caller StyleX and state-dependent styles remain composable. The panel's inner
 body is a layout owner, so direct-child consumer selectors must account for it.
 
+Pill Toast content changes retain intrinsic sizing, but trailing actions and the
+close control follow the live surface edge throughout its size spring, including
+interrupted motion and RTL. Text and controls do not scale. Reveal title ink only
+within the space preceding those controls; keep the native title's focus outline
+outside that clipping layer. Reduced motion settles the same geometry directly.
+
 ## Command
 
 Command uses unstyled interaction directly from `@ui-sdk/react/command` and
@@ -371,7 +377,8 @@ the observed glyph centers/heights, not Apple's rendering algorithm. Prefer
 fallback and allow passing intermediate snap positions. Non-editable wheel text
 cannot start selection or callout. Reduced motion adds no timed visual animation.
 
-SegmentedControl is a single-value RadioGroup, not a TabList. UI SDK owns radio
+SegmentedControl composes the SDK SegmentedControl and SegmentedControlItem,
+not Lenso RadioGroup or a TabList. UI SDK owns radio
 semantics, directional keyboard selection, disabled/read-only state, native inputs
 and validation. Native form reset restores the uncontrolled default after reset
 cancellation is resolved. Preserve native change details and cancellation.

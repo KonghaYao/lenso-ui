@@ -114,8 +114,8 @@ test("validates packed exports, required files, dependency protocols and release
     version: "0.8.0",
     dependencies: {
       "@lenso/tokens": "0.8.0",
-      "@lenso/glass": "0.2.2",
-      "@lenso/primitives": "0.9.0",
+      "@lenso/glass": "0.2.3",
+      "@lenso/primitives": "0.9.1",
     },
     exports: { ".": { types: "./dist/index.d.ts", import: "./dist/index.js" } },
   };
@@ -132,8 +132,8 @@ test("validates packed exports, required files, dependency protocols and release
           ...ui,
           dependencies: {
             "@lenso/tokens": "workspace:*",
-            "@lenso/glass": "0.2.2",
-            "@lenso/primitives": "0.9.0",
+            "@lenso/glass": "0.2.3",
+            "@lenso/primitives": "0.9.1",
           },
         },
         uiFiles,
@@ -150,8 +150,8 @@ test("validates packed exports, required files, dependency protocols and release
           ...ui,
           dependencies: {
             "@lenso/tokens": "0.7.0",
-            "@lenso/glass": "0.2.2",
-            "@lenso/primitives": "0.9.0",
+            "@lenso/glass": "0.2.3",
+            "@lenso/primitives": "0.9.1",
           },
         },
         uiFiles,
@@ -186,8 +186,8 @@ test("only skips an existing exact integrity and dependency pin", () => {
         dist: { integrity: "sha512-exact" },
         dependencies: {
           "@lenso/tokens": "0.8.0",
-          "@lenso/glass": "0.2.2",
-          "@lenso/primitives": "0.9.0",
+          "@lenso/glass": "0.2.3",
+          "@lenso/primitives": "0.9.1",
         },
       },
     },
@@ -224,8 +224,8 @@ test("only skips an existing exact integrity and dependency pin", () => {
               dist: { integrity: "sha512-exact" },
               dependencies: {
                 "@lenso/tokens": "0.7.0",
-                "@lenso/glass": "0.2.2",
-                "@lenso/primitives": "0.9.0",
+                "@lenso/glass": "0.2.3",
+                "@lenso/primitives": "0.9.1",
               },
             },
           },
@@ -283,7 +283,7 @@ test("primitive release requires retained entries, client boundaries and an exac
   const ui = {
     name: uiEntry.name,
     version: "0.10.0",
-    dependencies: { "@lenso/tokens": "0.10.0", "@lenso/glass": "0.2.2" },
+    dependencies: { "@lenso/tokens": "0.10.0", "@lenso/glass": "0.2.3" },
   };
   const uiFiles = [
     "package/dist/index.js",
@@ -322,8 +322,8 @@ test("accepted publication waits for registry version and latest without republi
     dist: { integrity: "sha512-exact" },
     dependencies: {
       "@lenso/tokens": "0.8.0",
-      "@lenso/glass": "0.2.2",
-      "@lenso/primitives": "0.9.0",
+      "@lenso/glass": "0.2.3",
+      "@lenso/primitives": "0.9.1",
     },
   };
   const snapshots: Array<{
@@ -413,8 +413,8 @@ test("waiting rejects wrong UI dependency and limits latest-tag lag to its deadl
             dist: { integrity: "sha512-exact" },
             dependencies: {
               "@lenso/tokens": "0.7.0",
-              "@lenso/glass": "0.2.2",
-              "@lenso/primitives": "0.9.0",
+              "@lenso/glass": "0.2.3",
+              "@lenso/primitives": "0.9.1",
             },
           },
         },
