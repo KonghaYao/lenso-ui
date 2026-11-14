@@ -1,11 +1,22 @@
 "use client";
 
-import { Component, lazy, Suspense, useContext, useId, useState, type ReactNode } from "react";
+import {
+  Component,
+  lazy,
+  Suspense,
+  useContext,
+  useEffect,
+  useId,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 import { StoryProvider, useStory, type WithControlProps } from "@fumadocs/story";
 import type { TypeNode } from "@fumadocs/story/type-tree";
 import { useFieldValue } from "@fumari/stf";
 import { Button, Fieldset, Input, Label, Select, Switch, Tabs, TextField } from "@lenso/ui";
 import * as stylex from "@stylexjs/stylex";
+import { useRouter, useRouterState } from "@tanstack/react-router";
 import { panel as s } from "./story-panel.stylex";
 import { ScrollableExampleScene } from "@/components/component-example-frame";
 import { ClientPreview } from "@/components/client-preview";
@@ -18,10 +29,13 @@ export {
   type PlaygroundScenario,
   useStoryLocale,
 } from "./story-context";
-import { useStoryLocale, Scenarios } from "./story-context";
+import { useStoryLocale, Scenarios, KeyboardGuidance } from "./story-context";
 import { PlaygroundActivity } from "./playground-activity";
 import { DeferredExampleSource } from "@/components/deferred-example-source";
 const StorySource = lazy(() => import("./story-source"));
+const subscribeHydration = () => () => {};
+const hydrated = () => true;
+const serverSnapshot = () => false;
 
 function Choice({
   label,
@@ -241,13 +255,24 @@ function LivePreview() {
 function Content() {
   const cn = useStoryLocale() === "cn";
   const { presets, preset, variant, setVariant, displayName } = useStory();
+  const router = useRouter();
+  const search = useRouterState({ select: (state) => state.location.searchStr });
+  const isHydrated = useSyncExternalStore(subscribeHydration, hydrated, serverSnapshot);
+  const requested = isHydrated ? new URLSearchParams(search).get("scenario") : null;
   const [view, setView] = useState("preview");
+  const keyboardGuidance = useContext(KeyboardGuidance);
   const scenarios = useContext(Scenarios);
-  const [example, setExample] = useState<string | undefined>(
-    () => scenarios.find((scenario) => scenario.initial)?.id,
-  );
-  const selected = scenarios.find(({ id }) => id === example);
+  const requestedPreset = presets.find(({ variant }) => variant === requested);
+  const selected =
+    scenarios.find(({ id }) => id === requested) ??
+    (!requestedPreset ? scenarios.find(({ initial }) => initial) : undefined);
+  const nextVariant = requestedPreset?.variant ?? presets[0]?.variant;
   const [reset, setReset] = useState(0);
+
+  useEffect(() => {
+    if (!selected && nextVariant && variant !== nextVariant) setVariant(nextVariant);
+  }, [selected, nextVariant, variant, setVariant]);
+
   const choices = [
     ...presets.map((item) => ({
       id: item.variant,
@@ -262,11 +287,11 @@ function Content() {
   ];
   const current = selected?.id ?? variant;
   const selectExample = (next: string) => {
-    if (scenarios.some(({ id }) => id === next)) setExample(next);
-    else {
-      setExample(undefined);
-      setVariant(next);
-    }
+    const url = new URL(window.location.href);
+    if (presets.some(({ variant }) => variant === next)) setVariant(next);
+    if (url.searchParams.get("scenario") === next) return;
+    url.searchParams.set("scenario", next);
+    router.history.push(`${url.pathname}${url.search}${url.hash}`);
   };
   const root =
     preset?.controls.type === "intersection" ? preset.controls.intersection : preset?.controls;
@@ -353,13 +378,21 @@ function Content() {
     >
       <div {...stylex.props(s.toolbar)}>
         <Tabs.ListContainer xstyle={s.listContainer}>
-          <Tabs.List aria-label={cn ? "交互示例视图" : "Playground view"} xstyle={s.list}>
+          <Tabs.List
+            aria-label={cn ? "交互示例视图" : "Playground view"}
+            xstyle={[s.list, Boolean(keyboardGuidance) && s.keyboardList]}
+          >
             <Tabs.Tab value="preview" xstyle={s.tab}>
               {cn ? "实时预览" : "Live preview"}
             </Tabs.Tab>
             <Tabs.Tab value="source" xstyle={s.tab}>
               {cn ? "代码" : "Code"}
             </Tabs.Tab>
+            {keyboardGuidance ? (
+              <Tabs.Tab value="keyboard" xstyle={s.tab}>
+                {cn ? "键盘操作" : "Keyboard"}
+              </Tabs.Tab>
+            ) : null}
             <Tabs.Indicator />
           </Tabs.List>
         </Tabs.ListContainer>
@@ -460,6 +493,11 @@ function Content() {
           )}
         </Suspense>
       </Tabs.Panel>
+      {keyboardGuidance ? (
+        <Tabs.Panel value="keyboard" xstyle={s.panel}>
+          {keyboardGuidance}
+        </Tabs.Panel>
+      ) : null}
     </Tabs>
   );
 }

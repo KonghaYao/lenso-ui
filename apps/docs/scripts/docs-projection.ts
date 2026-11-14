@@ -2,6 +2,7 @@ import { componentCategories } from "../src/lib/component-categories.ts";
 import { documentationRedirects } from "../src/lib/redirects.ts";
 import { readFile, mkdir, readdir } from "node:fs/promises";
 import { writeGeneratedFile } from "./write-generated-file.ts";
+import { keyboardGuidance } from "./keyboard-guidance.ts";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { ApiReference, DocsIndexPage } from "@lenso/ui-devtools/contract/types";
@@ -1301,8 +1302,13 @@ export async function generateDocsProjection(directory = root) {
               "",
             ]
           : []),
-        `<ComponentPlayground family="${family}" locale="${locale}" />`,
       ];
+      const keyboard = keyboardGuidance(family, locale);
+      sections.push(
+        keyboard
+          ? `<ComponentPlayground family="${family}" locale="${locale}">\n\n${keyboard.replace(/^## .+\n\n/, "")}\n\n</ComponentPlayground>`
+          : `<ComponentPlayground family="${family}" locale="${locale}" />`,
+      );
       markdown.set(markdownFile, `${sections.join("\n")}\n`);
       pages.push({
         locale,
