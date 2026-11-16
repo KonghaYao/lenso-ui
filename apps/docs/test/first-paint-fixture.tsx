@@ -46,10 +46,9 @@ function OverflowExample({
   return (
     <section data-overflow-case={controlled ? "controlled" : direction} dir={direction}>
       <Tabs
-        defaultValue={direction === "rtl" ? "Privacy" : "Overview"}
         {...(controlled
           ? { value: "Overview", onValueChange: (value) => setRequested(String(value)) }
-          : {})}
+          : { defaultValue: direction === "rtl" ? "Privacy" : "Overview" })}
         xstyle={[styles.overflow, wide && styles.wide]}
       >
         <Tabs.ListContainer>

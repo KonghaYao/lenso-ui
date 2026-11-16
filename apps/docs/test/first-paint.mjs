@@ -6,7 +6,7 @@ const server = await createFirstPaintServer();
 
 function tabsGeometry() {
   return [...document.querySelectorAll('[data-case] [data-lenso-slot="tabs-list"]')].map((list) => {
-    const tab = list.querySelector('[data-lenso-slot="tabs-tab"][data-active]');
+    const tab = list.querySelector('[data-lenso-slot="tabs-tab"][data-selected]');
     const tint = list.querySelector('[data-lenso-slot="tabs-tint"]');
     const t = tab?.getBoundingClientRect(),
       i = tint.getBoundingClientRect();
@@ -121,14 +121,12 @@ try {
               getComputedStyle(thumb).visibility !== "hidden" &&
               getComputedStyle(control).position === "relative"
             ) {
-              const c = control.getBoundingClientRect(),
+              const c = thumb.closest('[data-lenso-slot="slider-track"]').getBoundingClientRect(),
                 t = thumb.getBoundingClientRect();
               const input = thumb.querySelector('input[type="range"]');
               const fraction =
                 (Number(input.value) - Number(input.min)) / (Number(input.max) - Number(input.min));
-              window.sliderFrames.push(
-                t.x + t.width / 2 - c.x - t.width / 2 - (c.width - t.width) * fraction,
-              );
+              window.sliderFrames.push(t.x + t.width / 2 - c.x - c.width * fraction);
             }
             if (window.sampleSlider) requestAnimationFrame(sample);
           }

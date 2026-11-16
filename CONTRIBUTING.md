@@ -220,13 +220,11 @@ Migration notes, licenses and verification remain required.
 For this reconstruction landing, the owner waived Delta Review approval.
 This does not waive verification or any future hosting-required review.
 
-Publish a signed candidate to `delta/verify/<short-sha>`. The
-`Verify reconstruction` workflow must pass its `verify` job for that exact
-push SHA before a non-force fast-forward to `origin/main`. Verify the landed
-SHA and its main CI result. Main may reuse only trusted successful internal
-candidate evidence and the verified docs artifact for that same SHA, workflow
-and inputs; unavailable, stale or unverifiable evidence requires the full normal
-verification path. A pull-request result is not trusted candidate evidence.
+The one-time history baseline uses the signed exact-SHA candidate gate and
+explicit old-SHA lease described under Ongoing Git maintenance below. Ordinary
+maintenance subsequently uses protected pull requests. Main verification may
+reuse only trusted successful internal candidate evidence bound to the same
+SHA, workflow, inputs and verified artifact. PR evidence never qualifies.
 Preserve unrelated work and never bypass failed or missing required checks.
 
 This landing delivers source only. Do not publish npm packages, create release
@@ -279,3 +277,38 @@ and verification after approval. Packages build through one Turbo dependency gra
 then all tarballs are validated before the first publish. OIDC provenance, ordered
 publication and registry integrity checks remain required. Dispatching a release
 still requires separate owner authorization.
+
+## Ongoing Git maintenance
+
+Use Conventional Commits and pull requests with one clear logical goal. Prefer
+squash merging for ordinary changes. Split large refactors into independently
+reviewable stages. Preserve real authorship, contributor credit, license notices
+and accurate Agent `Co-authored-by` trailers. Do not invent attribution for
+historical commits whose tooling is unknown. Do not create `delivery-xxxx`
+branches or routinely rewrite public main history.
+
+The one-time history baseline switch requires a signed `delta/verify/**`
+candidate and successful `verify` for that exact push SHA. It alone uses an
+explicit old-SHA force-with-lease after rechecking the archive and current main.
+After this switch, ordinary changes merge through protected pull requests with
+required `verify` checks and signed commits. Prefer GitHub squash merge; its
+resulting main SHA runs full verification. PR results are never reused as trusted
+exact-SHA candidate evidence. Release still requires successful verification of
+its exact main SHA. Routine main force pushes are prohibited.
+
+Require tests, lint and typechecking. Review public API compatibility; runtime
+fixes need regression coverage. Explain breaking changes and provide migration
+instructions. Never hide errors to pass CI. Apply additional human scrutiny to
+high-risk Agent-generated changes.
+
+Use semantic versioning and record user-visible changes and migrations in
+`RELEASE.md`. Stable APIs preserve compatibility within a major version;
+candidate and experimental APIs must state their stability and migration policy.
+Every release must identify its source SHA and exact verification evidence.
+Published tags are immutable; publication remains separately authorized.
+
+Require pull requests and mandatory CI through branch protection, disallow
+routine force pushes, and avoid administrative bypasses. Configure protections
+only with verified required check names and a compatible integration mechanism.
+Do not delete branches until merged/abandoned status and absence of active task
+references are established. Preserve archives and contributor branches.
