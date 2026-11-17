@@ -22,14 +22,25 @@ export function foregroundRimShadow(size = 0) {
   return `0 ${4 + 4 * size}px ${8 + 13 * size}px rgb(0 0 0 / ${0.016 + 0.054 * size})`;
 }
 
-/** Includes the outside hairline; CSS places this image one pixel beyond the host. */
-export function foregroundRimPixels(
+export interface ForegroundRimRows {
+  readonly image: { width: number; height: number; data: Uint8ClampedArray<ArrayBuffer> };
+  readonly done: boolean;
+  /** Rasterize at most `rows` scanlines and return how many were processed. */
+  advance(rows?: number): number;
+}
+
+/**
+ * The scanline iterator behind {@link foregroundRimPixels}. Callers that cannot
+ * block a frame (a Worker-free fusion contour) advance a bounded number of rows
+ * per slice and receive the same bytes as the one-shot function.
+ */
+export function createForegroundRimRows(
   width: number,
   height: number,
   radius: number,
   shape: Shape,
   geometry?: GeometrySampler,
-) {
+): ForegroundRimRows {
   const density = 2;
   const columns = Math.ceil((width + 2) * density),
     rows = Math.ceil((height + 2) * density);
@@ -103,63 +114,90 @@ export function foregroundRimPixels(
   const top = Math.ceil((margin + 1) / pitchY);
   const bottom = Math.floor((height - margin + 1) / pitchY) - 1;
   const packed = new Uint32Array(image.data.buffer);
-  for (let y = 0; y < image.height; y++) {
-    if (!geometry && y > top && y <= bottom) {
-      packed.copyWithin(y * columns, top * columns, (top + 1) * columns);
-      continue;
-    }
-    const py = (y + 0.5) * pitchY - 1 - height / 2;
-    const cornerY = Math.max(0, Math.abs(py) - (innerHeight - innerRadius));
-    const span = innerWidth - innerRadius + Math.sqrt(Math.max(0, innerRadius ** 2 - cornerY ** 2));
-    const skip = !geometry && innerWidth > 0 && innerHeight > 0 && Math.abs(py) < innerHeight;
-    const repeat = !geometry && !skip && right > left;
-    const skipStart = skip ? Math.ceil((width / 2 - span + 1) / pitchX - 0.5) : left + 1;
-    const skipEnd = skip ? Math.floor((width / 2 + span + 1) / pitchX - 0.5) : right;
-    for (let x = 0; x < image.width; x++) {
-      // Skip the transparent interior or fill a straight edge from its first pixel.
-      if ((skip || repeat) && x >= skipStart && x <= skipEnd) {
-        if (repeat) {
-          const row = y * columns;
-          packed.fill(packed[row + left]!, row + x, row + right + 1);
+  let row = 0;
+  return {
+    image,
+    get done() {
+      return row >= image.height;
+    },
+    advance(rows = 1) {
+      const start = row;
+      const end = Math.min(image.height, row + Math.max(1, Math.floor(rows)));
+      for (; row < end; row++) {
+        const y = row;
+        if (!geometry && y > top && y <= bottom) {
+          packed.copyWithin(y * columns, top * columns, (top + 1) * columns);
+          continue;
         }
-        x = skipEnd;
-        continue;
+        const py = (y + 0.5) * pitchY - 1 - height / 2;
+        const cornerY = Math.max(0, Math.abs(py) - (innerHeight - innerRadius));
+        const span =
+          innerWidth - innerRadius + Math.sqrt(Math.max(0, innerRadius ** 2 - cornerY ** 2));
+        const skip = !geometry && innerWidth > 0 && innerHeight > 0 && Math.abs(py) < innerHeight;
+        const repeat = !geometry && !skip && right > left;
+        const skipStart = skip ? Math.ceil((width / 2 - span + 1) / pitchX - 0.5) : left + 1;
+        const skipEnd = skip ? Math.floor((width / 2 + span + 1) / pitchX - 0.5) : right;
+        for (let x = 0; x < image.width; x++) {
+          // Skip the transparent interior or fill a straight edge from its first pixel.
+          if ((skip || repeat) && x >= skipStart && x <= skipEnd) {
+            if (repeat) {
+              const line = y * columns;
+              packed.fill(packed[line + left]!, line + x, line + right + 1);
+            }
+            x = skipEnd;
+            continue;
+          }
+          const px = (x + 0.5) * pitchX - 1 - width / 2;
+          const qx = Math.abs(px) - (width / 2 - radius),
+            qy = Math.abs(py) - (height / 2 - radius);
+          const ox = Math.max(qx, 0),
+            oy = Math.max(qy, 0);
+          const point = geometry?.(px + width / 2, py + height / 2);
+          const distance =
+            point?.distance ??
+            radius - Math.sqrt(ox * ox + oy * oy) - Math.min(Math.max(qx, qy), 0);
+          // Even the nearest subpixel is beyond the outside hairline.
+          if (distance > depth || distance < -0.75 - halfDiagonal) continue;
+          premult = 0;
+          alpha = 0;
+          // Integrate the narrow discontinuous band only. Averaging straight RGB
+          // would turn transparent samples into dark fringes.
+          const count =
+            Math.abs(distance) < halfDiagonal ? 16 : distance > -1.1 && distance < 1.7 ? 4 : 1;
+          const samplesX = (point ? point.nx === 0 : qx <= 0 && qy >= qx) ? 1 : count;
+          const samplesY = (point ? point.ny === 0 : qy <= 0 && qx > qy) ? 1 : count;
+          for (let sy = 0; sy < samplesY; sy++)
+            for (let sx = 0; sx < samplesX; sx++) {
+              sample(
+                px + ((sx + 0.5) / samplesX - 0.5) * pitchX,
+                py + ((sy + 0.5) / samplesY - 0.5) * pitchY,
+              );
+            }
+          if (alpha <= 0) continue;
+          const at = (y * image.width + x) * 4;
+          image.data[at] =
+            image.data[at + 1] =
+            image.data[at + 2] =
+              Math.round((255 * premult) / alpha);
+          image.data[at + 3] = Math.round((255 * alpha) / (samplesX * samplesY));
+        }
       }
-      const px = (x + 0.5) * pitchX - 1 - width / 2;
-      const qx = Math.abs(px) - (width / 2 - radius),
-        qy = Math.abs(py) - (height / 2 - radius);
-      const ox = Math.max(qx, 0),
-        oy = Math.max(qy, 0);
-      const point = geometry?.(px + width / 2, py + height / 2);
-      const distance =
-        point?.distance ?? radius - Math.sqrt(ox * ox + oy * oy) - Math.min(Math.max(qx, qy), 0);
-      // Even the nearest subpixel is beyond the outside hairline.
-      if (distance > depth || distance < -0.75 - halfDiagonal) continue;
-      premult = 0;
-      alpha = 0;
-      // Integrate the narrow discontinuous band only. Averaging straight RGB
-      // would turn transparent samples into dark fringes.
-      const count =
-        Math.abs(distance) < halfDiagonal ? 16 : distance > -1.1 && distance < 1.7 ? 4 : 1;
-      const samplesX = (point ? point.nx === 0 : qx <= 0 && qy >= qx) ? 1 : count;
-      const samplesY = (point ? point.ny === 0 : qy <= 0 && qx > qy) ? 1 : count;
-      for (let sy = 0; sy < samplesY; sy++)
-        for (let sx = 0; sx < samplesX; sx++) {
-          sample(
-            px + ((sx + 0.5) / samplesX - 0.5) * pitchX,
-            py + ((sy + 0.5) / samplesY - 0.5) * pitchY,
-          );
-        }
-      if (alpha <= 0) continue;
-      const at = (y * image.width + x) * 4;
-      image.data[at] =
-        image.data[at + 1] =
-        image.data[at + 2] =
-          Math.round((255 * premult) / alpha);
-      image.data[at + 3] = Math.round((255 * alpha) / (samplesX * samplesY));
-    }
-  }
-  return image;
+      return row - start;
+    },
+  };
+}
+
+/** Includes the outside hairline; CSS places this image one pixel beyond the host. */
+export function foregroundRimPixels(
+  width: number,
+  height: number,
+  radius: number,
+  shape: Shape,
+  geometry?: GeometrySampler,
+) {
+  const rim = createForegroundRimRows(width, height, radius, shape, geometry);
+  while (!rim.done) rim.advance(rim.image.height);
+  return rim.image;
 }
 
 export function foregroundRim(width: number, height: number, radius: number, shape: Shape) {

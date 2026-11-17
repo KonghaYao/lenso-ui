@@ -1,9 +1,11 @@
 import { expect, test } from "bun:test";
 import {
+  createForegroundRimRows,
   foregroundRimPixels,
   foregroundRimTiles,
   hasForegroundRim,
 } from "../src/foreground-rim.js";
+import { createFusionContourJob } from "../src/fusion-contour-pixels.js";
 import { fusionGeometry } from "../src/fusion-geometry.js";
 import type { Shape } from "../src/optical-fields.js";
 
@@ -244,4 +246,48 @@ test("a fused capsule preserves the standalone foreground material", () => {
   for (let i = 0; i < standalone.data.length; i++)
     difference = Math.max(difference, Math.abs(standalone.data[i]! - fused.data[i]!));
   expect(difference).toBeLessThanOrEqual(1);
+});
+
+// The contour fallback rasterizes the same scanlines across frames. Changing
+// only the slice size must not change a single byte.
+test("bounded rim rows reproduce the one-shot rim bytes", () => {
+  const shapes = [
+    { x: 0, y: 0, width: 40, height: 20, radius: 10 },
+    { x: 44, y: 0, width: 40, height: 20, radius: 10 },
+  ];
+  const group: Shape = { ...shape, materialSurface: "group", materialClarity: 0.4 };
+  const geometry = fusionGeometry(shapes, 8);
+  const expected = foregroundRimPixels(84, 20, 0, group, geometry);
+  for (const rows of [1, 7, 64]) {
+    const bounded = createForegroundRimRows(84, 20, 0, group, geometry);
+    while (!bounded.done) bounded.advance(rows);
+    expect(bounded.image.data).toEqual(expected.data);
+  }
+});
+
+test("a sliced fusion contour job commits the synchronous pixels and offset", () => {
+  const shapes = [
+    { x: 0, y: 0, width: 40, height: 20, radius: 10 },
+    { x: 44, y: 0, width: 40, height: 20, radius: 10 },
+  ];
+  const group: Shape = { ...shape, materialSurface: "group", materialClarity: 0.4 };
+  const sample = fusionGeometry(shapes, 8);
+  const expected = foregroundRimPixels(84, 20, 0, group, sample);
+  const job = createFusionContourJob({
+    width: 84,
+    height: 20,
+    shapes,
+    spacing: 8,
+    grouped: false,
+    shape: group,
+  });
+  expect(job.done).toBe(false);
+  while (!job.done) job.advance(7);
+  expect(job.result.data).toEqual(expected.data);
+  expect([job.result.width, job.result.height, job.result.offsetX, job.result.offsetY]).toEqual([
+    expected.width,
+    expected.height,
+    46,
+    46,
+  ]);
 });

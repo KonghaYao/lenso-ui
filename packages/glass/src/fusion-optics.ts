@@ -1,5 +1,7 @@
 import { copyBackdrop, findBackdrop } from "./backdrop.js";
 import { lightLabel, lightStrength } from "./press-highlight.js";
+import { paintFusionContourPixels } from "./fusion-contour-pixels.js";
+import { createFusionContourRenderer } from "./fusion-contour-renderer.js";
 import { paintFusionContour } from "./fusion-contour.js";
 import { paintMaterialBackdrop } from "./backdrop-paints.js";
 import {
@@ -84,6 +86,7 @@ export function sharesFusionMaterial(
 /** Use the native lens recipe for both the changing member edges and the neck. */
 export function createFusionOptics(surface: HTMLElement) {
   const fieldsRenderer = createFusionFieldRenderer();
+  const contourRenderer = createFusionContourRenderer();
   const contourMask = createFusionMask(surface);
   const opticalMask = createFusionMask(surface);
   const shadow = createFusionShadow(surface);
@@ -114,6 +117,9 @@ export function createFusionOptics(surface: HTMLElement) {
   let motionHidden = false;
   let sharedMaterial = false;
   let referenceContour = false;
+  // The first group rim is painted synchronously: a surface can be revealed in
+  // the same task, and an empty contour would flash before the worker replies.
+  let contourPainted = false;
   let bootstrap: ReturnType<typeof createMaterialLens> | undefined;
   let bootstrapRecipe = "";
   let base: HTMLElement | undefined;
@@ -549,6 +555,10 @@ export function createFusionOptics(surface: HTMLElement) {
       shadow.visible(false);
       paintPreference("none");
       pending = undefined;
+      contourRenderer.cancel();
+      contourPainted = false;
+      if (surface.hasAttribute("data-lenso-fusion-contour-compute"))
+        surface.setAttribute("data-lenso-fusion-contour-compute", "idle");
       surface.style.setProperty("--lenso-fusion-opacity", "0");
       pressLight.style.backgroundImage = "none";
       previousLight = "none";
@@ -613,6 +623,9 @@ export function createFusionOptics(surface: HTMLElement) {
       sharedMaterial = sharesFusionMaterial(surface, members, settings);
       const contourShape: Shape | undefined =
         baseline && (sharedMaterial ? groupMaterial(baseline.shape) : baseline.shape);
+      // Entering the shared-contour mode repaints the reused canvas synchronously
+      // so the preceding member bitmap never shows through a widened rim.
+      if ((contourShape?.materialSurface === "group") !== referenceContour) contourPainted = false;
       referenceContour = contourShape?.materialSurface === "group";
       // The group contour strokes a vector path; only the pixel contour uses
       // the raster support list produced alongside that path.
@@ -645,22 +658,35 @@ export function createFusionOptics(surface: HTMLElement) {
         shadow.update(width, height, outline, contourShape?.appleMode === "dark");
       shadow.visible(ready && referenceContour);
       positionLayers(width, height);
-      paintRim = () =>
-        paintFusionContour(
-          edge,
-          width,
-          height,
-          outline,
-          sample,
-          contourShape && {
-            ...contourShape,
-            materialClarity:
-              (contourShape.materialProfile === "clear" ? 1 : (contourShape.materialClarity ?? 0)) *
-                (1 - pressClarity) +
-              pressClarity,
-          },
-          edgePixels,
-        );
+      // A single rounded capsule keeps its synchronous strip-reuse path; only a
+      // contour that must sample the shared field moves off the main thread.
+      const asyncContour =
+        referenceContour && contourShape?.appleMode === "light" && !sample.roundedRect;
+      paintRim = () => {
+        const shape = contourShape && {
+          ...contourShape,
+          materialClarity:
+            (contourShape.materialProfile === "clear" ? 1 : (contourShape.materialClarity ?? 0)) *
+              (1 - pressClarity) +
+            pressClarity,
+        };
+        // Group-light rasterization is the only unbounded per-pixel path; every
+        // later geometry or press-clarity change is coalesced off the main thread.
+        if (asyncContour && shape && contourPainted) {
+          surface.setAttribute("data-lenso-fusion-contour-compute", contourRenderer.backend);
+          contourRenderer.request({ width, height, shapes, spacing, grouped, shape }, (image) => {
+            if (stopped) return;
+            surface.setAttribute("data-lenso-fusion-contour-compute", contourRenderer.backend);
+            paintFusionContourPixels(edge, width, height, image);
+          });
+          return;
+        }
+        // A synchronous repaint owns the canvas; drop older queued worker pixels.
+        contourRenderer.cancel();
+        paintFusionContour(edge, width, height, outline, sample, shape, edgePixels);
+        contourPainted = true;
+        if (referenceContour) surface.setAttribute("data-lenso-fusion-contour-compute", "idle");
+      };
       paintRim();
       const mask = sharedMaterial
         ? contourMask.update(width, height, outline)
@@ -711,8 +737,10 @@ export function createFusionOptics(surface: HTMLElement) {
     destroy() {
       stopped = true;
       fieldsRenderer.destroy();
+      contourRenderer.destroy();
       surface.removeAttribute("data-lenso-fusion-compute");
       surface.removeAttribute("data-lenso-fusion-field");
+      surface.removeAttribute("data-lenso-fusion-contour-compute");
       surface.removeAttribute("data-lenso-fusion-moving");
       contourMask.destroy();
       opticalMask.destroy();
