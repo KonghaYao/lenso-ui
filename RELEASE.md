@@ -15,6 +15,13 @@ writing released canvases or returning stale capture output.
 No public API or caller migration is required. Optical formulas and motion constants
 are unchanged. These source fixes do not authorize a package release.
 
+Light fused-group contours compute interaction updates in a dedicated worker,
+with a sliced main-thread fallback. Each plane retains one in-flight raster and
+one latest request. Completed frames advance during continuous motion; canceled
+or destroyed owners cannot paint late results. Bitmap commits preserve the
+current CSS geometry. Initial group paint remains synchronous, and raster
+completion can still lag input; these changes do not promise a frame-rate target.
+
 # Prepared release: UI/Tokens 0.11.4, Glass 0.2.4 and Docs 0.3.5
 
 Glass reuses live-rim source pixels, preserves split optical resources during

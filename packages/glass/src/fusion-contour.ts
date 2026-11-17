@@ -1,6 +1,6 @@
 // Group rim/shadow recipes adapted from onlymoein/liquidglass 89f8b736 (MIT).
 // Copyright (c) 2026 Kelvin Zhang and Moein Saharkhiz.
-import { foregroundRimPixels } from "./foreground-rim.js";
+import { fusionContourPixels, paintFusionContourPixels } from "./fusion-contour-pixels.js";
 import type { FusionEdgePixels } from "./fusion-geometry.js";
 import { materialContours } from "@lenso/tokens/materials";
 import type { GeometrySampler, Shape } from "./refraction.js";
@@ -17,6 +17,17 @@ export function paintFusionContour(
 ) {
   const density = 2;
   if (shape?.materialSurface === "group") {
+    if (shape.appleMode === "light") {
+      canvas.style.width = `${width + 48}px`;
+      canvas.style.height = `${height + 48}px`;
+      paintFusionContourPixels(
+        canvas,
+        width,
+        height,
+        fusionContourPixels(width, height, shape, sample),
+      );
+      return;
+    }
     const padding = 24;
     const pixelWidth = Math.ceil((width + padding * 2) * density);
     const pixelHeight = Math.ceil((height + padding * 2) * density);
@@ -27,18 +38,6 @@ export function paintFusionContour(
     const context = canvas.getContext("2d")!;
     context.setTransform(density, 0, 0, density, padding * density, padding * density);
     context.clearRect(-padding, -padding, width + padding * 2, height + padding * 2);
-    if (shape.appleMode === "light") {
-      const rectangle = sample.roundedRect;
-      const rim = rectangle
-        ? foregroundRimPixels(rectangle.width, rectangle.height, rectangle.radius, shape)
-        : foregroundRimPixels(width, height, 0, shape, sample);
-      context.putImageData(
-        new ImageData(rim.data, rim.width, rim.height),
-        (padding - 1 + (rectangle?.x ?? 0)) * density,
-        (padding - 1 + (rectangle?.y ?? 0)) * density,
-      );
-      return;
-    }
     const data = decodeURIComponent(outline.slice(outline.indexOf(",") + 1)).match(
       / d="([^"]*)"/,
     )![1]!;
