@@ -114,6 +114,7 @@ interface Copy {
   pairs: Map<Element, HTMLElement>;
   /** Each text node of the original, with its copy. */
   texts: Map<Text, Text>;
+  sizes: Map<Element, { width: number; height: number }>;
   fields: [TextField, TextField][];
 }
 
@@ -228,8 +229,8 @@ function animatedStyles(
   return writes;
 }
 
-// A character edit keeps the tree, so only the mapped text nodes and the layout
-// their ancestors derive from it need to reach the copy.
+// Keep ordinary edits local. If text reflows an ancestor, siblings can stretch
+// or redistribute space too, even when the source's outer size stays fixed.
 function textWrites(
   copy: Copy,
   source: HTMLElement,
@@ -249,9 +250,17 @@ function textWrites(
     for (let node = text.parentElement; node && source.contains(node); node = node.parentElement)
       ancestors.add(node);
   }
-  for (const original of ancestors) {
+  const layoutChanged = [...ancestors].some((original) => {
+    const before = copy.sizes.get(original);
+    const after = reads.box(original);
+    return !before || before.width !== after.width || before.height !== after.height;
+  });
+  for (const original of layoutChanged ? copy.pairs.keys() : ancestors) {
     const target = copy.pairs.get(original);
-    if (target) writes.push(inline(original, target, original === source, reads));
+    if (target) {
+      writes.push(inline(original, target, original === source, reads));
+      copy.sizes.set(original, reads.box(original));
+    }
   }
   return writes;
 }
@@ -293,7 +302,8 @@ function copyOf(source: HTMLElement, reads: BackdropReads): Copy {
       if (from?.nodeType === 3 && to?.nodeType === 3) texts.set(from as Text, to as Text);
     }
   }
-  const result = { root, pairs, texts, fields };
+  const sizes = new Map([...pairs.keys()].map((original) => [original, reads.box(original)]));
+  const result = { root, pairs, texts, sizes, fields };
   // Only share the detached, fully styled recipe for this read batch. A custom
   // element can change its own light DOM during construction or attribute updates.
   if (
@@ -591,8 +601,10 @@ function createBackdropCopy(
         }
         if (copy && !freshlyStyled) {
           if (styleAll) {
-            for (const [original, target] of copy.pairs)
+            for (const [original, target] of copy.pairs) {
               updates.push(inline(original, target, original === source, reads));
+              copy.sizes.set(original, reads.box(original));
+            }
           } else {
             for (const write of animatedStyles(copy, source, change, reads)) updates.push(write);
           }
