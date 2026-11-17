@@ -18,6 +18,8 @@ export function paintFusionContour(
   const density = 2;
   if (shape?.materialSurface === "group") {
     if (shape.appleMode === "light") {
+      canvas.style.width = `${width + 48}px`;
+      canvas.style.height = `${height + 48}px`;
       paintFusionContourPixels(
         canvas,
         width,

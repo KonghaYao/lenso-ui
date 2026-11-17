@@ -73,6 +73,43 @@ try {
             .querySelector('[data-case="fusion"] [data-lenso-glass-fusion]')
             ?.getAttribute("data-lenso-fusion-contour-compute"),
         );
+        const moving = await page.evaluate(async () => {
+          const root = document.querySelector('[data-case="fusion"]');
+          const edge = root.querySelector("[data-lenso-glass-outline]");
+          const members = [...root.querySelectorAll("button")];
+          const put = CanvasRenderingContext2D.prototype.putImageData;
+          let commits = 0;
+          CanvasRenderingContext2D.prototype.putImageData = function (...args) {
+            if (this.canvas === edge) {
+              commits++;
+            }
+            return put.apply(this, args);
+          };
+          try {
+            const start = performance.now();
+            await new Promise((resolve) => {
+              const tick = (now) => {
+                if (now - start >= 2000) return resolve();
+                const width = 88 + 24 * Math.sin((now - start) / 160);
+                for (const member of members) {
+                  member.style.transition = "none";
+                  member.style.width = `${width}px`;
+                }
+                requestAnimationFrame(tick);
+              };
+              requestAnimationFrame(tick);
+            });
+            return { commits };
+          } finally {
+            CanvasRenderingContext2D.prototype.putImageData = put;
+            for (const member of members) {
+              member.style.width = "88px";
+              member.style.transition = "width 160ms linear";
+            }
+          }
+        });
+        assert.ok(moving.commits > 1, `${name}/${count}: contour froze during continuous motion`);
+        console.log(`${name}/${count}: continuous-motion commits=${moving.commits}`);
         await page.evaluate(() => {
           window.__frames = [];
           window.__longTasks = [];

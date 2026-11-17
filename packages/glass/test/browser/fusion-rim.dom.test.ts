@@ -95,6 +95,8 @@ test("light fusion paints the fused group field at its padded offset", () => {
 // commit; the preceding frame stays untouched until then.
 test("a completed contour commit clears and writes the padded bitmap once", () => {
   const canvas = document.createElement("canvas");
+  canvas.style.width = "200px";
+  canvas.style.height = "100px";
   const calls: string[] = [];
   let painted: ImageData | undefined;
   let position: number[] = [];
@@ -120,7 +122,8 @@ test("a completed contour commit clears and writes the padded bitmap once", () =
   };
   paintFusionContourPixels(canvas, 84, 20, image);
   expect([canvas.width, canvas.height]).toEqual([264, 136]);
-  expect([canvas.style.width, canvas.style.height]).toEqual(["132px", "68px"]);
+  // Geometry may have advanced while this bitmap was rendering.
+  expect([canvas.style.width, canvas.style.height]).toEqual(["200px", "100px"]);
   expect(calls).toEqual(["transform:1,0,0,1,0,0", "clear:0,0,264,136", "put"]);
   expect(painted?.data).toEqual(image.data);
   expect(position).toEqual([46, 46]);

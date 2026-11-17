@@ -133,7 +133,7 @@ function useWorker() {
   };
 }
 
-test("one contour request stays in flight and only the latest geometry is committed", () => {
+test("one contour stays in flight and completed frames advance before the latest geometry", () => {
   const restore = useWorker();
   const renderer = createFusionContourRenderer();
   try {
@@ -149,7 +149,7 @@ test("one contour request stays in flight and only the latest geometry is commit
       );
     expect(worker.posted.length).toBe(1);
 
-    // Superseded pixels must never reach the canvas, even when they arrive last.
+    // A completed frame must advance the contour even while newer geometry waits.
     worker.reply(worker.posted[0]!.id, {
       data: new Uint8ClampedArray([9, 9, 9, 9]),
       width: 1,
@@ -157,17 +157,45 @@ test("one contour request stays in flight and only the latest geometry is commit
       offsetX: 1,
       offsetY: 1,
     });
-    expect(commits.length).toBe(0);
+    expect(commits.length).toBe(1);
     expect(worker.posted.length).toBe(2);
     const latest = worker.posted[1]!;
     expect(latest.input.shapes[0]!.x).toBe(4);
 
     const result = fusionContourForInput(latest.input);
     worker.reply(latest.id, result);
-    expect(commits.length).toBe(1);
-    expect(commits[0]!.data).toEqual(result.data);
-    expect([commits[0]!.offsetX, commits[0]!.offsetY]).toEqual([46, 46]);
+    expect(commits.length).toBe(2);
+    expect(commits[1]!.data).toEqual(result.data);
+    expect([commits[1]!.offsetX, commits[1]!.offsetY]).toEqual([46, 46]);
     expect(worker.posted.length).toBe(2);
+  } finally {
+    renderer.destroy();
+    restore();
+  }
+});
+
+test("continuous geometry updates cannot starve worker commits and cancellation drops late replies", () => {
+  const restore = useWorker();
+  const renderer = createFusionContourRenderer();
+  const worker = FakeWorker.instances[0]!;
+  const image = fusionContourForInput(input);
+  let commits = 0;
+  try {
+    renderer.request(input, () => commits++);
+    for (let frame = 1; frame <= 120; frame++) {
+      renderer.request({ ...input, width: input.width + frame }, () => commits++);
+      const current = worker.posted.at(-1)!;
+      worker.reply(current.id, image);
+      expect(commits).toBe(frame);
+      expect(worker.posted.length).toBe(frame + 1);
+    }
+    const canceled = worker.posted.at(-1)!;
+    renderer.cancel();
+    worker.reply(canceled.id, image);
+    expect(commits).toBe(120);
+    renderer.request(input, () => commits++);
+    worker.reply(worker.posted.at(-1)!.id, image);
+    expect(commits).toBe(121);
   } finally {
     renderer.destroy();
     restore();
@@ -259,7 +287,7 @@ test("the Worker-free fallback finishes in bounded row slices with identical byt
   }
 });
 
-test("a superseded fallback job is dropped and the latest rows are committed", () => {
+test("the fallback presents completed frames before advancing to the latest geometry", () => {
   const previous = globalThis.Worker;
   globalThis.Worker = undefined as unknown as typeof Worker;
   const steps: (() => void)[] = [];
@@ -276,11 +304,36 @@ test("a superseded fallback job is dropped and the latest rows are committed", (
   try {
     renderer.request(input, (image) => commits.push(image));
     renderer.request(latest, (image) => commits.push(image));
-    // The first job keeps running; its pixels must never be painted.
+    // Both completed jobs must paint so a stream of updates cannot freeze the rim.
     while (steps.length) steps.shift()!();
-    expect(commits.length).toBe(1);
-    expect(commits[0]!.data).toEqual(fusionContourForInput(latest).data);
-    expect(commits[0]!.data).not.toEqual(fusionContourForInput(input).data);
+    expect(commits.length).toBe(2);
+    expect(commits[0]!.data).toEqual(fusionContourForInput(input).data);
+    expect(commits[1]!.data).toEqual(fusionContourForInput(latest).data);
+  } finally {
+    renderer.destroy();
+    globalThis.Worker = previous;
+  }
+});
+
+test("continuous updates also advance the fallback before motion settles", () => {
+  const previous = globalThis.Worker;
+  globalThis.Worker = undefined as unknown as typeof Worker;
+  const steps: (() => void)[] = [];
+  const renderer = createFusionContourRenderer({
+    budgetMs: 0,
+    rowsPerSlice: 4,
+    schedule: (callback) => steps.push(callback),
+  });
+  const committed: number[] = [];
+  try {
+    renderer.request(input, () => committed.push(0));
+    for (let frame = 1; frame <= 120; frame++) {
+      renderer.request({ ...input, width: input.width + frame }, () => committed.push(frame));
+      steps.shift()!();
+    }
+    expect(committed.length).toBeGreaterThan(1);
+    while (steps.length) steps.shift()!();
+    expect(committed.at(-1)).toBe(120);
   } finally {
     renderer.destroy();
     globalThis.Worker = previous;

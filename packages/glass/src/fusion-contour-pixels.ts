@@ -113,8 +113,7 @@ export function paintFusionContourPixels(
   const pixelHeight = Math.ceil((height + padding * 2) * density);
   if (canvas.width !== pixelWidth) canvas.width = pixelWidth;
   if (canvas.height !== pixelHeight) canvas.height = pixelHeight;
-  canvas.style.width = `${width + padding * 2}px`;
-  canvas.style.height = `${height + padding * 2}px`;
+  // The optics geometry owns CSS size and may already be ahead of this bitmap.
   const context = canvas.getContext("2d")!;
   // Resizing above already wiped the bitmap; clear keeps an unchanged size
   // identical to the synchronous painter before it writes the new rim.

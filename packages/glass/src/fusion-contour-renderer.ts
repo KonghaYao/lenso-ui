@@ -112,14 +112,13 @@ export function createFusionContourRenderer(options: FusionContourRendererOption
       return;
     }
     plane = undefined;
-    // Newer geometry arrived while this slice ran; only the latest is committed,
-    // and the replacement job starts on the next slice instead of extending this one.
+    // Present progress before sampling newer geometry. Dropping every completed
+    // job while a replacement waits can freeze the rim for an entire drag.
+    commit(ticket.work, job.result);
     if (latest) {
       schedule(dispatch);
       return;
     }
-    commit(ticket.work, job.result);
-    dispatch();
   }
 
   function begin(work: Work) {
@@ -149,10 +148,6 @@ export function createFusionContourRenderer(options: FusionContourRendererOption
         resolve: (image) => {
           if (stopped || plane !== ticket) return;
           plane = undefined;
-          if (latest) {
-            dispatch();
-            return;
-          }
           commit(work, image);
           dispatch();
         },
