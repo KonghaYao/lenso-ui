@@ -202,6 +202,31 @@ test("continuous geometry updates cannot starve worker commits and cancellation 
   }
 });
 
+test("canceling and restarting a plane cannot queue obsolete worker jobs", () => {
+  const restore = useWorker();
+  const renderer = createFusionContourRenderer();
+  const worker = FakeWorker.instances[0]!;
+  const image = fusionContourForInput(input);
+  const committed: number[] = [];
+  try {
+    renderer.request(input, () => committed.push(0));
+    for (let revision = 1; revision <= 20; revision++) {
+      renderer.cancel();
+      renderer.request({ ...input, width: input.width + revision }, () => committed.push(revision));
+    }
+    expect(worker.posted.length).toBe(1);
+    worker.reply(worker.posted[0]!.id, image);
+    expect(committed).toEqual([]);
+    expect(worker.posted.length).toBe(2);
+    expect(worker.posted[1]!.input.width).toBe(input.width + 20);
+    worker.reply(worker.posted[1]!.id, image);
+    expect(committed).toEqual([20]);
+  } finally {
+    renderer.destroy();
+    restore();
+  }
+});
+
 test("a throwing paint keeps the renderer usable for later frames", () => {
   const restore = useWorker();
   const report = console.error;

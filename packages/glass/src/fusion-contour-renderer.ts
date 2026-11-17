@@ -7,7 +7,12 @@ import {
 
 type Work = { input: FusionContourInput; commit: (image: FusionContourImage) => void };
 type Pending = { resolve: (image: FusionContourImage) => void; reject: (error: Error) => void };
-type Plane = { work: Work; id?: number; job?: ReturnType<typeof createFusionContourJob> };
+type Plane = {
+  work: Work;
+  id?: number;
+  canceled?: boolean;
+  job?: ReturnType<typeof createFusionContourJob>;
+};
 
 const requests = new Map<number, Pending>();
 let worker: Worker | undefined;
@@ -148,13 +153,14 @@ export function createFusionContourRenderer(options: FusionContourRendererOption
         resolve: (image) => {
           if (stopped || plane !== ticket) return;
           plane = undefined;
-          commit(work, image);
+          if (!ticket.canceled) commit(work, image);
           dispatch();
         },
         reject: () => {
           if (stopped || plane !== ticket) return;
           plane = undefined;
-          begin(work);
+          if (ticket.canceled) dispatch();
+          else begin(work);
         },
       });
       try {
@@ -183,8 +189,10 @@ export function createFusionContourRenderer(options: FusionContourRendererOption
     cancel() {
       latest = undefined;
       const ticket = plane;
-      plane = undefined;
-      if (ticket?.id !== undefined) requests.delete(ticket.id);
+      // A running worker cannot be interrupted. Retain its slot until the reply
+      // so repeated cancel/request pairs cannot enqueue unbounded obsolete jobs.
+      if (ticket?.id !== undefined) ticket.canceled = true;
+      else plane = undefined;
     },
     destroy() {
       if (stopped) return;
